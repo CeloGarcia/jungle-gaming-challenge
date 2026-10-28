@@ -1,0 +1,314 @@
+{
+  "environment": {
+    "node": "v24.14.0",
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz",
+    "base": "http://127.0.0.1:4173",
+    "startedAt": "2026-10-28T12:34:16.150Z",
+    "scenario": "success",
+    "build": "dist; conteúdo integral e mocks habilitados"
+  },
+  "runs": [
+    {
+      "page": "home",
+      "profile": "mobile",
+      "run": 1,
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2571.6895000000004,
+        "cumulative-layout-shift": 0.00001587362816197208,
+        "total-blocking-time": 158
+      },
+      "version": "13.6.0",
+      "warnings": []
+    },
+    {
+      "page": "home",
+      "profile": "mobile",
+      "run": 2,
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2529.3072500000003,
+        "cumulative-layout-shift": 0.00001587362816197208,
+        "total-blocking-time": 146
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "home",
+      "profile": "mobile",
+      "run": 3,
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2536.486,
+        "cumulative-layout-shift": 0.00001587362816197208,
+        "total-blocking-time": 142
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "home",
+      "profile": "desktop",
+      "run": 1,
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 785.44425,
+        "cumulative-layout-shift": 0.002860065387640642,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "home",
+      "profile": "desktop",
+      "run": 2,
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 736.519,
+        "cumulative-layout-shift": 0.002860065387640642,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "home",
+      "profile": "desktop",
+      "run": 3,
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 739.2774999999999,
+        "cumulative-layout-shift": 0.002860065387640642,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "mobile",
+      "run": 1,
+      "scores": {
+        "performance": 93,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2753.3672500000002,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 192
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "mobile",
+      "run": 2,
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2776.2582500000003,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 129
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "mobile",
+      "run": 3,
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2764.55325,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 138
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "desktop",
+      "run": 1,
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 669.5279999999999,
+        "cumulative-layout-shift": 0.06573810440819398,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "desktop",
+      "run": 2,
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 677.4585,
+        "cumulative-layout-shift": 0.06573810440819398,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    },
+    {
+      "page": "detail",
+      "profile": "desktop",
+      "run": 3,
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 698.4265,
+        "cumulative-layout-shift": 0.06580734072877126,
+        "total-blocking-time": 0
+      },
+      "version": "13.6.0",
+      "warnings": [
+        "There may be stored data affecting loading performance in this location: IndexedDB. Audit this page in an incognito window to prevent those resources from affecting your scores."
+      ]
+    }
+  ],
+  "medians": [
+    {
+      "page": "home",
+      "profile": "mobile",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2536.486,
+        "cumulative-layout-shift": 0.00001587362816197208,
+        "total-blocking-time": 146
+      }
+    },
+    {
+      "page": "home",
+      "profile": "desktop",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 739.2774999999999,
+        "cumulative-layout-shift": 0.002860065387640642,
+        "total-blocking-time": 0
+      }
+    },
+    {
+      "page": "detail",
+      "profile": "mobile",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 2764.55325,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 138
+      }
+    },
+    {
+      "page": "detail",
+      "profile": "desktop",
+      "scores": {
+        "performance": 99,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 92
+      },
+      "metrics": {
+        "largest-contentful-paint": 677.4585,
+        "cumulative-layout-shift": 0.06573810440819398,
+        "total-blocking-time": 0
+      }
+    }
+  ]
+}
