@@ -136,7 +136,7 @@ function fixtures(): Nft[] {
       version: 1,
       rating: 4.8,
       reviews: 19,
-      rare: j === 0,
+      rare: j === 2,
       trending: i % 2 === 0,
       created: 36 - i,
     };
@@ -536,11 +536,28 @@ async function createOrderInternal(
       "WALLET_NETWORK",
       "Selecione uma carteira da mesma rede.",
     );
-  const collectorErrors:Record<string,string>={};
-  for(const key of ["displayName","username","profileName","referral","ens"]){if(!body.collector?.[key]?.trim())collectorErrors[key]="Campo obrigatório.";}
-  if(!/^\S+@\S+\.\S+$/.test(body.collector?.email||""))collectorErrors.email="E-mail inválido.";
-  if(!/^[\w.-]+\.eth$/.test(body.collector?.ens||""))collectorErrors.ens="Use um nome terminado em .eth.";
-  if(Object.keys(collectorErrors).length)throw new Fault(422,"VALIDATION","Confira os dados do colecionador.",collectorErrors);
+  const collectorErrors: Record<string, string> = {};
+  for (const key of [
+    "displayName",
+    "username",
+    "profileName",
+    "referral",
+    "ens",
+  ]) {
+    if (!body.collector?.[key]?.trim())
+      collectorErrors[key] = "Campo obrigatório.";
+  }
+  if (!/^\S+@\S+\.\S+$/.test(body.collector?.email || ""))
+    collectorErrors.email = "E-mail inválido.";
+  if (!/^[\w.-]+\.eth$/.test(body.collector?.ens || ""))
+    collectorErrors.ens = "Use um nome terminado em .eth.";
+  if (Object.keys(collectorErrors).length)
+    throw new Fault(
+      422,
+      "VALIDATION",
+      "Confira os dados do colecionador.",
+      collectorErrors,
+    );
   const now = new Date().toISOString();
   const order: Order = {
     id: `order-${++db.sequence}`,
@@ -615,7 +632,13 @@ export function validateProfile(body: Record<string, unknown>, id: string) {
 }
 export function validateWallet(body: Wallet) {
   const fields: Record<string, string> = {};
-  for (const field of ["displayName", "nickname", "profileName", "referral", "ens"] as const)
+  for (const field of [
+    "displayName",
+    "nickname",
+    "profileName",
+    "referral",
+    "ens",
+  ] as const)
     if (!body[field]?.trim()) fields[field] = "Campo obrigatório.";
   if (!["Ethereum", "Polygon", "Solana"].includes(body.network))
     fields.network = "Escolha uma rede.";

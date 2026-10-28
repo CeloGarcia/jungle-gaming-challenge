@@ -275,7 +275,11 @@ export default function App() {
         </a>
         <Realtime token={token} />
         <Header />
-        <main id="main" className={`page ${auth ? "auth-page" : ""} ${pathname === "/cart" ? "cart-page" : ""} ${pathname.startsWith("/nft/") ? "detail-page" : ""}`} tabIndex={-1}>
+        <main
+          id="main"
+          className={`page ${auth ? "auth-page" : ""} ${pathname === "/cart" ? "cart-page" : ""} ${pathname.startsWith("/nft/") ? "detail-page" : ""}`}
+          tabIndex={-1}
+        >
           {privateView && !session.data ? (
             <Skeleton detail />
           ) : pathname === "/" ? (
@@ -415,8 +419,9 @@ function Header() {
 
 function BottomNav() {
   const session = useSession();
-  const pathname=useRouterState({select:s=>s.location.pathname})
-  if(!['/','/profile','/wallets','/favorites'].includes(pathname))return null
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (!["/", "/profile", "/wallets", "/favorites"].includes(pathname))
+    return null;
   return (
     <nav className="bottom-nav" aria-label="Navegação mobile">
       <Link to="/" aria-label="Início">
@@ -685,19 +690,34 @@ function Home() {
             Colecione arte digital rara, apoie artistas e tenha uma parte da
             cultura da internet.
           </p>
-          <p className="mobile-hero-description">Descubra NFTs selecionados de criadores do mundo todo.</p>
+          <p className="mobile-hero-description">
+            Descubra NFTs selecionados de criadores do mundo todo.
+          </p>
           <Button asChild>
-            <a href="#catalog">EXPLORAR <ArrowRight size={16} /></a>
+            <a href="#catalog">
+              EXPLORAR <ArrowRight size={16} />
+            </a>
           </Button>
-          <span className="hero-dots" aria-hidden="true"><DesignAsset name="heroDots" /></span>
+          <span className="hero-dots" aria-hidden="true">
+            <DesignAsset name="heroDots" />
+          </span>
         </div>
-        <div className="hero-art"><img
-          src="/assets/emerald.webp"
-          alt="Emerald Ape, arte digital em destaque na Kurio"
-          width={450}
-          height={450}
-          fetchPriority="high"
-        /><img className="hero-thumbnail" src="/assets/sage.webp" alt="" width={58} height={58} /></div>
+        <div className="hero-art">
+          <img
+            src="/assets/emerald.webp"
+            alt="Emerald Ape, arte digital em destaque na Kurio"
+            width={450}
+            height={450}
+            fetchPriority="high"
+          />
+          <img
+            className="hero-thumbnail"
+            src="/assets/sage.webp"
+            alt=""
+            width={58}
+            height={58}
+          />
+        </div>
       </section>
       <section className="market-layout" id="catalog">
         <aside>
@@ -864,10 +884,20 @@ function Home() {
               />
               <div>
                 <small>
-                  {12 + i} de setembro | Leitura de {i + 2} min
+                  {[12, 13, 15, 15][i]} de setembro | Leitura de{" "}
+                  {[6, 2, 3, 2][i]} min
                 </small>
                 <h3>{title}</h3>
-                <p>Conheça a cultura digital e colecione com consciência.</p>
+                <p>
+                  {
+                    [
+                      "Aprenda a colecionar, negociar e verificar ativos digitais.",
+                      "Conheça criadores que moldam a cultura digital.",
+                      "Entenda raridade, procedência, direitos autorais e utilidade.",
+                      "Proteja sua carteira, seus ativos e sua identidade.",
+                    ][i]
+                  }
+                </p>
                 <Aux>Ler mais →</Aux>
               </div>
             </article>
@@ -918,7 +948,16 @@ function Detail({ id }: { id: string }) {
   };
   return (
     <>
-      <div className="mobile-detail-controls"><Link to="/" className="mobile-detail-back" aria-label="Voltar ao mercado"><ArrowLeft size={18}/></Link><FavoriteButton nft={n} /></div>
+      <div className="mobile-detail-controls">
+        <Link
+          to="/"
+          className="mobile-detail-back"
+          aria-label="Voltar ao mercado"
+        >
+          <ArrowLeft size={18} />
+        </Link>
+        <FavoriteButton nft={n} />
+      </div>
       <Breadcrumb label={n.name} />
       <section className="detail-layout">
         <div className="gallery">
@@ -944,7 +983,10 @@ function Detail({ id }: { id: string }) {
         </div>
         <div className="detail-info">
           <div className="detail-title">
-            <h1>{n.name}</h1><span className="mobile-rating">★ {n.rating}({n.reviews})</span>
+            <h1>{n.name}</h1>
+            <span className="mobile-rating">
+              ★ {n.rating}({n.reviews})
+            </span>
             <FavoriteButton nft={n} />
           </div>
           <strong className="detail-price">{money(n.price)}</strong>
@@ -956,7 +998,8 @@ function Detail({ id }: { id: string }) {
           </p>
           <h2>Sobre este NFT:</h2>
           <p>
-            Um colecionável digital {edition} finalizado à mão da coleção Kurio Editions, verificado na {n.network}.
+            Um colecionável digital {edition} finalizado à mão da coleção Kurio
+            Editions, verificado na {n.network}.
           </p>
           <fieldset className="edition-picker">
             <legend>Edição:</legend>
@@ -982,7 +1025,9 @@ function Detail({ id }: { id: string }) {
               max={n.editions[edition]}
               onChange={setQuantity}
             />
-          <strong className="mobile-purchase-price">{money(eth(wei(n.price)*BigInt(quantity)))}</strong>
+            <strong className="mobile-purchase-price">
+              {money(eth(wei(n.price) * BigInt(quantity)))}
+            </strong>
             <Button
               disabled={action.isPending || !n.editions[edition]}
               onClick={() => void add(true)}
@@ -1131,19 +1176,38 @@ function Quantity({
   );
 }
 function Recommendations({ title }: { title: string }) {
-  const result = useResource<Catalog>("/nfts?page=1", ["recommendations"]);
+  const [page, setPage] = useState(0);
+  const result = useResource<Catalog>("/nfts?page=" + (page + 1), [
+    "recommendations",
+    page,
+  ]);
   return (
     <section className="recommendations">
       <h2>{title}</h2>
-      <div className="recommend-grid">
-        {result.data?.items.slice(3, 6).map((n) => (
-          <NftCard key={n.id} nft={n} />
+      {result.isPending ? (
+        <Skeleton />
+      ) : result.isError ? (
+        <Failure error={result.error} retry={() => void result.refetch()} />
+      ) : (
+        <div className="recommend-grid" aria-label={title}>
+          {result.data.items.slice(3, 8).map((n) => (
+            <NftCard key={n.id} nft={n} />
+          ))}
+        </div>
+      )}
+      <div className="carousel-dots" aria-label="Páginas de recomendações">
+        {[0, 1, 2].map((i) => (
+          <button
+            key={i}
+            aria-label={"Recomendações, página " + (i + 1)}
+            aria-pressed={page === i}
+            onClick={() => setPage(i)}
+          />
         ))}
       </div>
     </section>
   );
 }
-
 function useQuote(coupon: string, network: Network, enabled = true) {
   const owner = useOwner(),
     cart = useCart();
@@ -1254,7 +1318,12 @@ function CartPage() {
   return (
     <>
       <Breadcrumb label="Carrinho" />
-      <div className="mobile-page-heading"><Link to="/" aria-label="Voltar ao mercado"><ArrowLeft size={18}/></Link><h1>Carrinho de NFTs</h1></div>
+      <div className="mobile-page-heading">
+        <Link to="/" aria-label="Voltar ao mercado">
+          <ArrowLeft size={18} />
+        </Link>
+        <h1>Carrinho de NFTs</h1>
+      </div>
       {cart.isPending ? (
         <Skeleton detail />
       ) : cart.isError ? (
@@ -1427,18 +1496,102 @@ function SelectField({
     </div>
   );
 }
-function EnsField({name,value,onChange,error}:{name:string;value:string;onChange:(v:string)=>void;error?:string}) {
- return <div className="field"><label htmlFor={name}>Nome ENS<span aria-hidden="true"> *</span></label><div className="ens-input"><select aria-label="Sufixo ENS" value=".eth" onChange={()=>{}}><option>.eth</option></select><input id={name} name={name} value={value.replace(/\.eth$/, "")} onChange={e=>onChange(e.target.value ? e.target.value.replace(/\.eth$/, "")+".eth" : "")} required aria-invalid={!!error} aria-describedby={error ? name+"-error" : undefined}/></div>{error && <p id={name+"-error"} className="field-error">{error}</p>}</div>;
+function EnsField({
+  name,
+  value,
+  onChange,
+  error,
+}: {
+  name: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={name}>
+        Nome ENS<span aria-hidden="true"> *</span>
+      </label>
+      <div className="ens-input">
+        <select aria-label="Sufixo ENS" value=".eth" onChange={() => {}}>
+          <option>.eth</option>
+        </select>
+        <input
+          id={name}
+          name={name}
+          value={value.replace(/\.eth$/, "")}
+          onChange={(e) =>
+            onChange(
+              e.target.value
+                ? e.target.value.replace(/\.eth$/, "") + ".eth"
+                : "",
+            )
+          }
+          required
+          aria-invalid={!!error}
+          aria-describedby={error ? name + "-error" : undefined}
+        />
+      </div>
+      {error && (
+        <p id={name + "-error"} className="field-error">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
-function WalletFields({wallet,onChange,errors}:{wallet:Wallet;onChange:(v:Wallet)=>void;errors:Record<string,string>}) {
- const field=(key:keyof Wallet,label:string,required=true)=><Field key={key} name={"wallet-"+key} label={label} value={String(wallet[key])} onChange={v=>onChange({...wallet,[key]:v})} required={required} type={key==="email"?"email":"text"} error={errors[key]}/>;
- return <div className="form-grid wallet-fields">
- {field("displayName","Nome de exibição")}{field("nickname","Apelido da carteira")}
- <SelectField name="wallet-network" label="Rede" value={wallet.network} onChange={v=>onChange({...wallet,network:v as Network})} options={networks}/>{field("profileName","Nome do perfil")}
- {field("address","Endereço da carteira")}{field("secondary","ENS ou carteira secundária (opcional)",false)}
- <SelectField name="wallet-type" label="Tipo de carteira" value={wallet.type} onChange={v=>onChange({...wallet,type:v as Wallet["type"]})} options={["MetaMask","WalletConnect","Coinbase Wallet"]}/>{field("referral","Código de indicação")}
- {field("email","E-mail")}<EnsField name="wallet-ens" value={wallet.ens} onChange={v=>onChange({...wallet,ens:v})} error={errors.ens}/>
- </div>;
+function WalletFields({
+  wallet,
+  onChange,
+  errors,
+}: {
+  wallet: Wallet;
+  onChange: (v: Wallet) => void;
+  errors: Record<string, string>;
+}) {
+  const field = (key: keyof Wallet, label: string, required = true) => (
+    <Field
+      key={key}
+      name={"wallet-" + key}
+      label={label}
+      value={String(wallet[key])}
+      onChange={(v) => onChange({ ...wallet, [key]: v })}
+      required={required}
+      type={key === "email" ? "email" : "text"}
+      error={errors[key]}
+    />
+  );
+  return (
+    <div className="form-grid wallet-fields">
+      {field("displayName", "Nome de exibição")}
+      {field("nickname", "Apelido da carteira")}
+      <SelectField
+        name="wallet-network"
+        label="Rede"
+        value={wallet.network}
+        onChange={(v) => onChange({ ...wallet, network: v as Network })}
+        options={networks}
+      />
+      {field("profileName", "Nome do perfil")}
+      {field("address", "Endereço da carteira")}
+      {field("secondary", "ENS ou carteira secundária (opcional)", false)}
+      <SelectField
+        name="wallet-type"
+        label="Tipo de carteira"
+        value={wallet.type}
+        onChange={(v) => onChange({ ...wallet, type: v as Wallet["type"] })}
+        options={["MetaMask", "WalletConnect", "Coinbase Wallet"]}
+      />
+      {field("referral", "Código de indicação")}
+      {field("email", "E-mail")}
+      <EnsField
+        name="wallet-ens"
+        value={wallet.ens}
+        onChange={(v) => onChange({ ...wallet, ens: v })}
+        error={errors.ens}
+      />
+    </div>
+  );
 }
 
 function Auth({ register }: { register: boolean }) {
@@ -1562,7 +1715,8 @@ function Auth({ register }: { register: boolean }) {
             )
           }
         >
-          <GoogleMark />Continuar com Google
+          <GoogleMark />
+          Continuar com Google
         </button>
         <button
           onClick={() =>
@@ -1571,7 +1725,8 @@ function Auth({ register }: { register: boolean }) {
             )
           }
         >
-          <DesignAsset name="facebook" />Continuar com Facebook
+          <DesignAsset name="facebook" />
+          Continuar com Facebook
         </button>
       </div>
       <p className="auth-switch">
@@ -1659,7 +1814,15 @@ function Checkout() {
   const wallet =
     wallets.data?.find((w) => w.id === selected) ||
     wallets.data?.find((w) => w.primary);
-  useEffect(()=>{if(wallet)setCollector(old=>({...old,profileName:old.profileName ?? wallet.profileName,referral:old.referral ?? wallet.referral,ens:old.ens ?? wallet.ens}));},[wallet]);
+  useEffect(() => {
+    if (wallet)
+      setCollector((old) => ({
+        ...old,
+        profileName: old.profileName ?? wallet.profileName,
+        referral: old.referral ?? wallet.referral,
+        ens: old.ens ?? wallet.ens,
+      }));
+  }, [wallet]);
   const network = wallet?.network || "Ethereum";
   const quote = useQuote(coupon, network);
   const restoredCoupon = useRef(false);
@@ -1774,53 +1937,83 @@ function Checkout() {
   return (
     <>
       <Breadcrumb label="Pagamento" />
-      <div className="mobile-page-heading"><Link to="/cart" aria-label="Voltar ao carrinho"><ArrowLeft size={18}/></Link><h1>Pagamento com carteira</h1></div>
+      <div className="mobile-page-heading">
+        <Link to="/cart" aria-label="Voltar ao carrinho">
+          <ArrowLeft size={18} />
+        </Link>
+        <h1>Pagamento com carteira</h1>
+      </div>
       <form className="checkout-layout" onSubmit={submit}>
         <section className="checkout-collector">
-          <details className="collector-details" open={!mobile} onInvalidCapture={e => { e.currentTarget.open = true; }}>
+          <details
+            className="collector-details"
+            open={!mobile}
+            onInvalidCapture={(e) => {
+              e.currentTarget.open = true;
+            }}
+          >
             <summary>Dados do colecionador</summary>
-          <h1>Perfil do colecionador</h1>
-          <div className="form-grid collector-fields">
-            {[
-              ["displayName", "Nome de exibição"],
-              ["username", "Nome de usuário"],
-              ["network", "Rede"],
-              ["profileName", "Nome do perfil"],
-              ["address", "Endereço da carteira"],
-              ["secondary", "ENS ou carteira secundária (opcional)"],
-              ["type", "Tipo de carteira"],
-              ["referral", "Código de indicação"],
-              ["email", "E-mail"],
-              ["ens", "Nome ENS"],
-            ].map(([key, label]) => key === "ens" ? <EnsField key={key} name="collector-ens" value={collector.ens || ""} onChange={update("ens")} error={errors.ens}/> : (
-              <Field
-                key={key}
-                name={`collector-${key}`}
-                label={label}
-                type={key === "email" ? "email" : "text"}
-                value={(["network","address","type"].includes(key) && wallet ? String(wallet[key as keyof Wallet]) : collector[key]) || ""}
-                readOnly={["network","address","type"].includes(key)}
-                onChange={update(key)}
-                required={key !== "secondary"}
-                error={errors[key]}
-              />
-            ))}
-            <div className="field">
-              <label htmlFor="collector-note">
-                Observação do colecionador (opcional)
-              </label>
-              <textarea
-                id="collector-note"
-                value={collector.note || ""}
-                onChange={(e) => update("note")(e.target.value)}
-              />
+            <h1>Perfil do colecionador</h1>
+            <div className="form-grid collector-fields">
+              {[
+                ["displayName", "Nome de exibição"],
+                ["username", "Nome de usuário"],
+                ["network", "Rede"],
+                ["profileName", "Nome do perfil"],
+                ["address", "Endereço da carteira"],
+                ["secondary", "ENS ou carteira secundária (opcional)"],
+                ["type", "Tipo de carteira"],
+                ["referral", "Código de indicação"],
+                ["email", "E-mail"],
+                ["ens", "Nome ENS"],
+              ].map(([key, label]) =>
+                key === "ens" ? (
+                  <EnsField
+                    key={key}
+                    name="collector-ens"
+                    value={collector.ens || ""}
+                    onChange={update("ens")}
+                    error={errors.ens}
+                  />
+                ) : (
+                  <Field
+                    key={key}
+                    name={`collector-${key}`}
+                    label={label}
+                    type={key === "email" ? "email" : "text"}
+                    value={
+                      (["network", "address", "type"].includes(key) && wallet
+                        ? String(wallet[key as keyof Wallet])
+                        : collector[key]) || ""
+                    }
+                    readOnly={["network", "address", "type"].includes(key)}
+                    onChange={update(key)}
+                    required={key !== "secondary"}
+                    error={errors[key]}
+                  />
+                ),
+              )}
+              <div className="field">
+                <label htmlFor="collector-note">
+                  Observação do colecionador (opcional)
+                </label>
+                <textarea
+                  id="collector-note"
+                  value={collector.note || ""}
+                  onChange={(e) => update("note")(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
           </details>
         </section>
         <section className="checkout-wallet-panel">
-          <div className="section-title"><h2>Carteira conectada</h2><Link to="/wallets">Trocar carteira</Link></div>
-          <p>Conexão e pagamento simulados. Nenhuma extensão será aberta.</p>
+          <div className="section-title">
+            <h2>Carteira conectada</h2>
+            <Link to="/wallets">Trocar carteira</Link>
+          </div>
+          <p className="payment-simulation-note">
+            Pagamento simulado. Nenhuma extensão será aberta.
+          </p>
           {wallets.data?.length ? (
             <div className="wallet-options">
               {wallets.data.map((w) => (
@@ -1841,7 +2034,6 @@ function Checkout() {
                     <strong>{w.ens || shortAddress(w.address)}</strong>Rede{" "}
                     {w.network}
                   </span>
-
                 </button>
               ))}
             </div>
@@ -1881,7 +2073,13 @@ function Checkout() {
                   setReview(null);
                 }}
               >
-                <span className="provider-mark">{name === "Coinbase Wallet" ? <DesignAsset name="wallet" /> : name[0]}</span>
+                <span className="provider-mark">
+                  {name === "Coinbase Wallet" ? (
+                    <DesignAsset name="wallet" />
+                  ) : (
+                    name[0]
+                  )}
+                </span>
                 {name}
               </button>
             ))}
@@ -1917,13 +2115,16 @@ function Checkout() {
               </strong>
             </div>
           ))}
-          <Coupon
-            value={coupon}
-            onApply={(v) => {
-              setCoupon(v);
-              setReview(null);
-            }}
-          />
+          <details className="checkout-coupon">
+            <summary>Tem um código promocional? Aplique aqui</summary>
+            <Coupon
+              value={coupon}
+              onApply={(v) => {
+                setCoupon(v);
+                setReview(null);
+              }}
+            />
+          </details>
           {quote.isError ? (
             <Failure error={quote.error} retry={() => void quote.refetch()} />
           ) : (
@@ -2033,20 +2234,30 @@ function OrderPage({ id }: { id: string }) {
           </dd>
         </div>
         <div>
+          <dt>Total</dt>
+          <dd>{money(order.quote.total)}</dd>
+        </div>
+        <div>
           <dt>Carteira</dt>
           <dd>{shortAddress(order.wallet.address)}</dd>
         </div>
       </dl>
       <h2>Detalhes da transação</h2>
+      <div className="receipt-table-head">
+        <span>NFTs</span>
+        <span>Edições</span>
+        <span>Subtotal</span>
+      </div>
       {order.quote.items.map((i) => (
         <div className="receipt-item" key={i.id}>
           <img src={i.nft.image} width={64} height={64} alt="" />
           <span>
             {i.nft.name}
             <small>
-              {i.edition} · Edições: {i.quantity}
+              ID do token: #{i.nft.tokenId} · {i.edition}
             </small>
           </span>
+          <span className="receipt-editions">(x {i.quantity})</span>
           <strong>{money(eth(wei(i.nft.price) * BigInt(i.quantity)))}</strong>
         </div>
       ))}
@@ -2348,20 +2559,162 @@ const blankWallet: Wallet = {
   ens: "",
 };
 function WalletsPage() {
- const owner=useOwner(),session=useSession(),notify=useNotice();
- const wallets=useResource<Wallet[]>("/wallets",["wallets",owner]);
- const [editing,setEditing]=useState<Wallet|null>(null),[usePrimary,setUsePrimary]=useState(false);
- const initialized=useRef(false),action=useAction(),errors=fieldErrors(action.error);
- useEffect(()=>{if(wallets.data && !initialized.current){initialized.current=true;setEditing(wallets.data.find(w=>w.primary)||{...blankWallet,primary:true,email:session?.user.email||""});}},[wallets.data,session]);
- const save=async(e:FormEvent)=>{e.preventDefault();if(!editing)return;try{await action.mutateAsync({method:editing.id?"patch":"post",path:editing.id?"/wallets/"+editing.id:"/wallets",body:editing});invalidate();setEditing(null);notify("Carteira salva e disponível no pagamento.");}catch{/* Field errors stay in the form. */}};
- if(wallets.isPending)return <AccountLayout title="Carteiras"><Skeleton/></AccountLayout>;
- if(wallets.isError)return <AccountLayout title="Carteiras"><Failure error={wallets.error} retry={()=>void wallets.refetch()}/></AccountLayout>;
- return <AccountLayout title="Carteiras"><p>Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados na simulação.</p>
- {[true,false].map(primary=>{const wallet=wallets.data.find(w=>w.primary===primary),active=editing?.primary===primary;const title=primary?"Carteira principal":"Carteira secundária";return <section className="wallet-section" key={String(primary)}>
- <div className="section-title"><h2>{title}</h2><div className="wallet-section-actions">{!primary && <label className="checkbox-label"><input type="checkbox" checked={usePrimary} disabled={!wallets.data.some(w=>w.primary)} onChange={e=>{setUsePrimary(e.target.checked);if(e.target.checked){const main=wallets.data.find(w=>w.primary);if(main)setEditing({...main,id:wallet?.id||"",primary:false,displayName:"Reserva"});}else if(editing?.primary===false)setEditing(null);}}/>Igual à carteira principal</label>}
- <Button variant="ghost" size="sm" onClick={()=>{action.reset();setEditing(wallet||{...blankWallet,primary,email:session?.user.email||"",displayName:primary?"Principal":"Reserva"});}}>{wallet?"Editar":"Adicionar"}</Button></div></div>
- {active && editing ? <form onSubmit={save} aria-label={title}><WalletFields wallet={editing} onChange={setEditing} errors={errors}/>{action.isError&&<p role="alert" className="field-error">{errorMessage(action.error)}</p>}<div className="wallet-form-actions"><Button type="submit" disabled={action.isPending}>Salvar carteira</Button><Button type="button" variant="ghost" onClick={()=>setEditing(null)}>Cancelar</Button></div></form> : wallet ? <div className="wallet-preview"><WalletIcon/><div><h3>{wallet.displayName}</h3><p>{wallet.nickname} · {wallet.type}</p><p>{wallet.network} · {shortAddress(wallet.address)}</p><p>{wallet.ens}</p></div></div> : <p>Você ainda não adicionou uma carteira {primary?"principal":"secundária"}.</p>}
- </section>;})}</AccountLayout>;
+  const owner = useOwner(),
+    session = useSession(),
+    notify = useNotice();
+  const wallets = useResource<Wallet[]>("/wallets", ["wallets", owner]);
+  const [editing, setEditing] = useState<Wallet | null>(null),
+    [usePrimary, setUsePrimary] = useState(false);
+  const initialized = useRef(false),
+    action = useAction(),
+    errors = fieldErrors(action.error);
+  useEffect(() => {
+    if (wallets.data && !initialized.current) {
+      initialized.current = true;
+      setEditing(
+        wallets.data.find((w) => w.primary) || {
+          ...blankWallet,
+          primary: true,
+          email: session?.user.email || "",
+        },
+      );
+    }
+  }, [wallets.data, session]);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await action.mutateAsync({
+        method: editing.id ? "patch" : "post",
+        path: editing.id ? "/wallets/" + editing.id : "/wallets",
+        body: editing,
+      });
+      invalidate();
+      setEditing(null);
+      notify("Carteira salva e disponível no pagamento.");
+    } catch {
+      /* Field errors stay in the form. */
+    }
+  };
+  if (wallets.isPending)
+    return (
+      <AccountLayout title="Carteiras">
+        <Skeleton />
+      </AccountLayout>
+    );
+  if (wallets.isError)
+    return (
+      <AccountLayout title="Carteiras">
+        <Failure error={wallets.error} retry={() => void wallets.refetch()} />
+      </AccountLayout>
+    );
+  return (
+    <AccountLayout title="Carteiras">
+      <p>
+        Estas carteiras ficam disponíveis no pagamento e para receber NFTs
+        comprados na simulação.
+      </p>
+      {[true, false].map((primary) => {
+        const wallet = wallets.data.find((w) => w.primary === primary),
+          active = editing?.primary === primary;
+        const title = primary ? "Carteira principal" : "Carteira secundária";
+        return (
+          <section className="wallet-section" key={String(primary)}>
+            <div className="section-title">
+              <h2>{title}</h2>
+              <div className="wallet-section-actions">
+                {!primary && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={usePrimary}
+                      disabled={!wallets.data.some((w) => w.primary)}
+                      onChange={(e) => {
+                        setUsePrimary(e.target.checked);
+                        if (e.target.checked) {
+                          const main = wallets.data.find((w) => w.primary);
+                          if (main)
+                            setEditing({
+                              ...main,
+                              id: wallet?.id || "",
+                              primary: false,
+                              displayName: "Reserva",
+                            });
+                        } else if (editing?.primary === false) setEditing(null);
+                      }}
+                    />
+                    Igual à carteira principal
+                  </label>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    action.reset();
+                    setEditing(
+                      wallet || {
+                        ...blankWallet,
+                        primary,
+                        email: session?.user.email || "",
+                        displayName: primary ? "Principal" : "Reserva",
+                      },
+                    );
+                  }}
+                >
+                  {wallet ? "Editar" : "Adicionar"}
+                </Button>
+              </div>
+            </div>
+            {active && editing ? (
+              <form onSubmit={save} aria-label={title}>
+                <WalletFields
+                  wallet={editing}
+                  onChange={setEditing}
+                  errors={errors}
+                />
+                {action.isError && (
+                  <p role="alert" className="field-error">
+                    {errorMessage(action.error)}
+                  </p>
+                )}
+                <div className="wallet-form-actions">
+                  <Button type="submit" disabled={action.isPending}>
+                    Salvar carteira
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setEditing(null)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            ) : wallet ? (
+              <div className="wallet-preview">
+                <WalletIcon />
+                <div>
+                  <h3>{wallet.displayName}</h3>
+                  <p>
+                    {wallet.nickname} · {wallet.type}
+                  </p>
+                  <p>
+                    {wallet.network} · {shortAddress(wallet.address)}
+                  </p>
+                  <p>{wallet.ens}</p>
+                </div>
+              </div>
+            ) : (
+              <p>
+                Você ainda não adicionou uma carteira{" "}
+                {primary ? "principal" : "secundária"}.
+              </p>
+            )}
+          </section>
+        );
+      })}
+    </AccountLayout>
+  );
 }
 function Favorites() {
   const owner = useOwner();
@@ -2487,8 +2840,19 @@ function Footer() {
         <div>
           <h2>Redes sociais</h2>
           <div className="social-chips">
-            {["f", "X", "in", "◎", "▶"].map((s) => (
-              <Aux key={s}>{s}</Aux>
+            {(
+              [
+                "facebookFooter",
+                "instagramFooter",
+                "twitterFooter",
+                "linkedinFooter",
+                "youtubeFooter",
+              ] as const
+            ).map((name) => (
+              <Aux key={name}>
+                <DesignAsset name={name} />
+                <span className="sr-only">{name.replace("Footer", "")}</span>
+              </Aux>
             ))}
           </div>
           <h2>Carteiras compatíveis</h2>
