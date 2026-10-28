@@ -45,6 +45,7 @@ import type {
   Network,
   Nft,
   Order,
+  Profile,
   Quote,
   ResourceEvent,
   Session,
@@ -52,14 +53,12 @@ import type {
 } from "./domain";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+
 const NoticeContext = createContext<(message: string) => void>(() => {});
-
 const SessionContext = createContext<Session | null>(null);
-
 function useSession() {
   return useContext(SessionContext);
 }
-
 function useMobile() {
   const [mobile, setMobile] = useState(
     () => matchMedia("(max-width:600px)").matches,
@@ -72,15 +71,12 @@ function useMobile() {
   }, []);
   return mobile;
 }
-
 function useNotice() {
   return useContext(NoticeContext);
 }
-
 function useOwner() {
   return useSession()?.user.id || "visitor";
 }
-
 function useResource<T>(path: string, key: unknown[], enabled = true) {
   return useQuery({
     queryKey: key,
@@ -88,7 +84,6 @@ function useResource<T>(path: string, key: unknown[], enabled = true) {
     enabled,
   });
 }
-
 function useAction() {
   const notify = useNotice();
   return useMutation({
@@ -106,16 +101,13 @@ function useAction() {
     onError: (error) => notify(errorMessage(error)),
   });
 }
-
 function useCart() {
   const owner = useOwner();
   return useResource<Cart>("/cart", ["cart", owner]);
 }
-
 function invalidate() {
   void queryClient.invalidateQueries();
 }
-
 function Aux({ children }: { children: ReactNode }) {
   const notify = useNotice();
   return (
@@ -132,7 +124,6 @@ function Aux({ children }: { children: ReactNode }) {
     </button>
   );
 }
-
 function Skeleton({ detail = false }: { detail?: boolean }) {
   return (
     <div
@@ -146,7 +137,6 @@ function Skeleton({ detail = false }: { detail?: boolean }) {
     </div>
   );
 }
-
 function Failure({ error, retry }: { error: unknown; retry: () => void }) {
   return (
     <div className="state-box" role="alert">
@@ -156,7 +146,6 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
     </div>
   );
 }
-
 function Empty({
   title = "Nenhum NFT encontrado",
   children,
@@ -172,7 +161,6 @@ function Empty({
     </div>
   );
 }
-
 function Breadcrumb({ label }: { label: string }) {
   return (
     <nav className="breadcrumb" aria-label="Navegação estrutural">
@@ -304,9 +292,9 @@ export default function App() {
           ) : pathname.startsWith("/orders/") ? (
             <OrderPage id={pathname.slice(8)} />
           ) : pathname === "/profile" ? (
-            <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
+            <ProfilePage />
           ) : pathname === "/wallets" ? (
-            <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
+            <WalletsPage />
           ) : pathname === "/favorites" ? (
             <Favorites />
           ) : auth ? (
@@ -430,9 +418,8 @@ function Header() {
 
 function BottomNav() {
   const session = useSession();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (!["/", "/profile", "/wallets", "/favorites"].includes(pathname))
-    return null;
+  const pathname=useRouterState({select:s=>s.location.pathname})
+  if(!['/','/profile','/wallets','/favorites'].includes(pathname))return null
   return (
     <nav className="bottom-nav" aria-label="Navegação mobile">
       <Link to="/" aria-label="Início">
@@ -458,7 +445,6 @@ function BottomNav() {
     </nav>
   );
 }
-
 function FavoriteButton({ nft }: { nft: Nft }) {
   const session = useSession(),
     owner = useOwner(),
@@ -511,7 +497,6 @@ function FavoriteButton({ nft }: { nft: Nft }) {
     </button>
   );
 }
-
 function NftCard({ nft }: { nft: Nft }) {
   return (
     <article className="nft-card">
@@ -540,7 +525,6 @@ function NftCard({ nft }: { nft: Nft }) {
     </article>
   );
 }
-
 function Filters({
   params,
   onChange,
@@ -643,7 +627,6 @@ function Filters({
     </div>
   );
 }
-
 function Home() {
   const params = useRouterState({
     select: (s) => s.location.search,
@@ -938,10 +921,7 @@ function Detail({ id }: { id: string }) {
   };
   return (
     <>
-      <Link to="/" className="mobile-detail-back">
-        <ArrowLeft size={20} />
-        Voltar ao mercado
-      </Link>
+      <Link to="/" className="mobile-detail-back"><ArrowLeft size={20}/>Voltar ao mercado</Link>
       <Breadcrumb label={n.name} />
       <section className="detail-layout">
         <div className="gallery">
@@ -1007,9 +987,7 @@ function Detail({ id }: { id: string }) {
               max={n.editions[edition]}
               onChange={setQuantity}
             />
-            <strong className="mobile-purchase-price">
-              {money(eth(wei(n.price) * BigInt(quantity)))}
-            </strong>
+          <strong className="mobile-purchase-price">{money(eth(wei(n.price)*BigInt(quantity)))}</strong>
             <Button
               disabled={action.isPending || !n.editions[edition]}
               onClick={() => void add(true)}
@@ -1115,7 +1093,6 @@ function Detail({ id }: { id: string }) {
     </>
   );
 }
-
 function Quantity({
   value,
   max,
@@ -1158,7 +1135,6 @@ function Quantity({
     </div>
   );
 }
-
 function Recommendations({ title }: { title: string }) {
   const result = useResource<Catalog>("/nfts?page=1", ["recommendations"]);
   return (
@@ -1184,7 +1160,6 @@ function useQuote(coupon: string, network: Network, enabled = true) {
     retry: false,
   });
 }
-
 function Summary({ quote, children }: { quote?: Quote; children?: ReactNode }) {
   return (
     <div className="summary">
@@ -1220,7 +1195,6 @@ function Summary({ quote, children }: { quote?: Quote; children?: ReactNode }) {
     </div>
   );
 }
-
 function Coupon({
   value,
   onApply,
@@ -1258,7 +1232,6 @@ function Coupon({
     </div>
   );
 }
-
 function CartPage() {
   const cart = useCart(),
     action = useAction();
@@ -1376,7 +1349,6 @@ type FieldProps = {
   autoComplete?: string;
   readOnly?: boolean;
 };
-
 function Field({
   label,
   name,
@@ -1429,7 +1401,37 @@ function Field({
     </div>
   );
 }
-
+function SelectField({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={name}>{label} *</label>
+      <select
+        id={name}
+        required
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 function Auth({ register }: { register: boolean }) {
   const mobile = useMobile();
   const navigate = useNavigate(),
@@ -2138,7 +2140,367 @@ function AccountLayout({
     </div>
   );
 }
-
+function ProfilePage() {
+  const owner = useOwner();
+  const query = useResource<Profile>("/profile", ["profile", owner]);
+  const [values, setValues] = useState<Profile | null>(null),
+    [password, setPassword] = useState({
+      currentPassword: "",
+      newPassword: "",
+      confirmation: "",
+    });
+  const action = useAction(),
+    passwordAction = useAction(),
+    notify = useNotice();
+  useEffect(() => {
+    if (query.data) setValues(query.data);
+  }, [query.data]);
+  if (query.isPending) return <Skeleton detail />;
+  if (query.isError)
+    return <Failure error={query.error} retry={() => void query.refetch()} />;
+  if (!values) return null;
+  const errors = fieldErrors(action.error),
+    passwordErrors = fieldErrors(passwordAction.error);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await action.mutateAsync({
+        method: "patch",
+        path: "/profile",
+        body: values,
+      });
+      invalidate();
+      notify("Perfil salvo na simulação.");
+    } catch {
+      /* Mutation reports errors. */
+    }
+  };
+  return (
+    <AccountLayout title="Perfil do colecionador">
+      <form onSubmit={submit}>
+        <div className="form-grid">
+          {[
+            ["displayName", "Nome de exibição"],
+            ["username", "Nome de usuário"],
+            ["email", "E-mail"],
+            ["ens", "Nome ENS"],
+            ["walletNickname", "Apelido da carteira"],
+          ].map(([key, label]) => (
+            <Field
+              key={key}
+              name={key}
+              label={label}
+              type={key === "email" ? "email" : "text"}
+              value={values[key as keyof Profile]}
+              onChange={(v) => setValues({ ...values, [key]: v })}
+              required={["displayName", "username", "email"].includes(key)}
+              error={errors[key]}
+            />
+          ))}
+        </div>
+        <div className="avatar-editor">
+          <h3>Avatar</h3>
+          {values.avatar ? (
+            <img src={values.avatar} alt="Seu avatar" width={90} height={90} />
+          ) : (
+            <div className="avatar-placeholder">
+              <User size={40} />
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setValues({ ...values, avatar: "" })}
+          >
+            Remover
+          </Button>
+          <label className="button outline upload-label">
+            Alterar
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              aria-label="Alterar avatar"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 500000) {
+                  notify("Use uma imagem de até 500 KB.");
+                  return;
+                }
+                if (
+                  !["image/png", "image/jpeg", "image/webp"].includes(file.type)
+                ) {
+                  notify("Use PNG, JPEG ou WebP.");
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onload = () =>
+                  setValues({ ...values, avatar: String(reader.result) });
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+        </div>
+        {action.isError && (
+          <p role="alert" className="field-error">
+            {errorMessage(action.error)}
+          </p>
+        )}
+        <Button type="submit" disabled={action.isPending}>
+          Salvar
+        </Button>
+      </form>
+      <form
+        className="password-form"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            await passwordAction.mutateAsync({
+              method: "put",
+              path: "/profile/password",
+              body: password,
+            });
+            setPassword({
+              currentPassword: "",
+              newPassword: "",
+              confirmation: "",
+            });
+            notify("Senha alterada na simulação.");
+          } catch {
+            /* Mutation reports errors. */
+          }
+        }}
+      >
+        <h2>Alterar senha</h2>
+        <div className="form-grid">
+          {[
+            ["currentPassword", "Senha atual"],
+            ["newPassword", "Nova senha"],
+            ["confirmation", "Confirmar nova senha"],
+          ].map(([key, label]) => (
+            <Field
+              key={key}
+              name={key}
+              label={label}
+              type="password"
+              value={password[key as keyof typeof password]}
+              onChange={(v) => setPassword({ ...password, [key]: v })}
+              required
+              autoComplete={
+                key === "currentPassword" ? "current-password" : "new-password"
+              }
+              error={passwordErrors[key]}
+            />
+          ))}
+        </div>
+        {passwordAction.isError && (
+          <p className="field-error" role="alert">
+            {errorMessage(passwordAction.error)}
+          </p>
+        )}
+        <Button type="submit" disabled={passwordAction.isPending}>
+          Salvar nova senha
+        </Button>
+      </form>
+    </AccountLayout>
+  );
+}
+const blankWallet: Wallet = {
+  id: "",
+  primary: false,
+  displayName: "",
+  nickname: "",
+  network: "Ethereum",
+  profileName: "",
+  address: "",
+  secondary: "",
+  type: "MetaMask",
+  referral: "",
+  email: "",
+  ens: "",
+};
+function WalletsPage() {
+  const owner = useOwner();
+  const wallets = useResource<Wallet[]>("/wallets", ["wallets", owner]);
+  const [editing, setEditing] = useState<Wallet | null>(null),
+    [usePrimary, setUsePrimary] = useState(false);
+  const action = useAction(),
+    notify = useNotice();
+  const errors = fieldErrors(action.error);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    try {
+      await action.mutateAsync({
+        method: editing.id ? "patch" : "post",
+        path: editing.id ? `/wallets/${editing.id}` : "/wallets",
+        body: editing,
+      });
+      invalidate();
+      setEditing(null);
+      notify("Carteira salva e disponível no pagamento.");
+    } catch {
+      /* Form errors displayed below. */
+    }
+  };
+  return (
+    <AccountLayout title="Carteiras">
+      <p>
+        Estas carteiras ficam disponíveis no pagamento e para receber NFTs
+        comprados na simulação.
+      </p>
+      {wallets.isPending ? (
+        <Skeleton />
+      ) : wallets.isError ? (
+        <Failure error={wallets.error} retry={() => void wallets.refetch()} />
+      ) : (
+        <>
+          {[true, false].map((primary) => {
+            const wallet = wallets.data.find((w) => w.primary === primary);
+            return (
+              <section className="wallet-section" key={String(primary)}>
+                <div className="section-title">
+                  <h2>
+                    {primary ? "Carteira principal" : "Carteira secundária"}
+                  </h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setEditing(
+                        wallet || {
+                          ...blankWallet,
+                          primary,
+                          email: walletEmail(wallets.data),
+                          displayName: primary ? "Principal" : "Reserva",
+                        },
+                      )
+                    }
+                  >
+                    {wallet ? "Editar" : "Adicionar"}
+                  </Button>
+                </div>
+                {wallet ? (
+                  <div className="wallet-preview">
+                    <WalletIcon />
+                    <div>
+                      <h3>{wallet.displayName}</h3>
+                      <p>
+                        {wallet.nickname} · {wallet.type}
+                      </p>
+                      <p>
+                        {wallet.network} · {shortAddress(wallet.address)}
+                      </p>
+                      <p>{wallet.ens}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>
+                    Você ainda não adicionou uma carteira{" "}
+                    {primary ? "principal" : "secundária"}.
+                  </p>
+                )}
+                {!primary && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={usePrimary}
+                      onChange={(e) => {
+                        setUsePrimary(e.target.checked);
+                        if (e.target.checked) {
+                          const main = wallets.data.find((w) => w.primary);
+                          if (main)
+                            setEditing({
+                              ...main,
+                              id: wallet?.id || "",
+                              primary: false,
+                              displayName: "Reserva",
+                            });
+                        }
+                      }}
+                    />
+                    Igual à carteira principal
+                  </label>
+                )}
+              </section>
+            );
+          })}
+        </>
+      )}
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+        title={editing?.primary ? "Carteira principal" : "Carteira secundária"}
+        className="wallet-dialog"
+      >
+        {editing && (
+          <form onSubmit={save}>
+            <div className="form-grid">
+              {[
+                ["displayName", "Nome de exibição"],
+                ["nickname", "Apelido da carteira"],
+                ["profileName", "Nome do perfil"],
+                ["address", "Endereço da carteira"],
+                ["secondary", "ENS ou carteira secundária (opcional)"],
+                ["referral", "Código de indicação"],
+                ["email", "E-mail"],
+                ["ens", "Nome ENS"],
+              ].map(([key, label]) => (
+                <Field
+                  key={key}
+                  name={`wallet-${key}`}
+                  label={label}
+                  type={key === "email" ? "email" : "text"}
+                  value={editing[key as keyof Wallet] as string}
+                  onChange={(v) => setEditing({ ...editing, [key]: v })}
+                  required={[
+                    "displayName",
+                    "nickname",
+                    "profileName",
+                    "address",
+                    "email",
+                  ].includes(key)}
+                  error={errors[key]}
+                />
+              ))}
+              <SelectField
+                label="Rede"
+                name="wallet-network"
+                value={editing.network}
+                onChange={(v) =>
+                  setEditing({ ...editing, network: v as Network })
+                }
+                options={networks}
+              />
+              <SelectField
+                label="Tipo de carteira"
+                name="wallet-type"
+                value={editing.type}
+                onChange={(v) =>
+                  setEditing({ ...editing, type: v as Wallet["type"] })
+                }
+                options={["MetaMask", "WalletConnect", "Coinbase Wallet"]}
+              />
+            </div>
+            {action.isError && (
+              <p role="alert" className="field-error">
+                {errorMessage(action.error)}
+              </p>
+            )}
+            <Button type="submit" disabled={action.isPending}>
+              Salvar carteira
+            </Button>
+          </form>
+        )}
+      </Dialog>
+    </AccountLayout>
+  );
+}
+function walletEmail(wallets: Wallet[]) {
+  return wallets[0]?.email || "";
+}
 function Favorites() {
   const owner = useOwner();
   const favorites = useResource<string[]>("/favorites", ["favorites", owner]);
@@ -2163,7 +2525,6 @@ function Favorites() {
     </AccountLayout>
   );
 }
-
 function FavoritesItems({ ids }: { ids: string[] }) {
   return (
     <div className="nft-grid">
@@ -2173,7 +2534,6 @@ function FavoritesItems({ ids }: { ids: string[] }) {
     </div>
   );
 }
-
 function FavoriteItem({ id }: { id: string }) {
   const result = useResource<Nft>(`/nfts/${id}`, ["nft", id]);
   return result.data ? (
@@ -2277,7 +2637,6 @@ function Footer() {
     </footer>
   );
 }
-
 function Newsletter() {
   const notify = useNotice();
   return (
@@ -2304,7 +2663,6 @@ function Newsletter() {
     </form>
   );
 }
-
 function DemoPanel() {
   const [open, setOpen] = useState(false);
   const action = useAction();
