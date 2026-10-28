@@ -4454,3 +4454,128 @@ a:hover {
     gap: 12px;
   }
 }
+
+@media (max-width: 600px) {
+  .checkout-confirmation {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+    z-index: 10;
+    background: #140d0a;
+  }
+  .checkout-confirmation .review-status {
+    font-size: 10px;
+  }
+  .checkout-confirmation > .button {
+    margin-top: 8px;
+  }
+}
+@media (max-width: 390px) {
+  .hero-art > img:first-child {
+    height: 120px;
+  }
+  .hero-thumbnail {
+    top: 76px;
+  }
+}
+
+.carousel-dots {
+  gap: 0;
+}
+.carousel-dots button {
+  width: 28px;
+  height: 28px;
+  border: 0 !important;
+  background: transparent !important;
+  display: grid;
+  place-items: center;
+}
+.carousel-dots button:after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border: 1px solid #d28a4c;
+  border-radius: 50%;
+}
+.carousel-dots button[aria-pressed="true"]:after {
+  background: #d28a4c;
+}
+.recommend-grid > .recommendation-skeleton {
+  min-height: 0;
+  aspect-ratio: 0.8;
+}
+.account-layout aside nav > .aux {
+  padding-left: 15px;
+}
+.scan-mark {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 24px;
+  z-index: 1;
+}
+.scan-mark img {
+  position: absolute;
+  max-width: none;
+}
+.scan-mark img:nth-child(1) {
+  left: 0;
+  top: 11px;
+}
+.scan-mark img:nth-child(2) {
+  left: 0;
+  bottom: 0;
+}
+.scan-mark img:nth-child(3) {
+  right: 0;
+  top: 0;
+}
+.scan-mark img:nth-child(4) {
+  right: 0;
+  bottom: 0;
+}
+.scan-mark img:nth-child(5) {
+  left: 0;
+  top: 0;
+}
+@media (max-width: 600px) {
+  .bottom-nav .central-button {
+    position: relative;
+    width: 65px;
+    height: 65px;
+    border: 0;
+    background: transparent;
+    margin-top: -65px;
+    box-sizing: border-box;
+  }
+  .central-button > .scan-circle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: none;
+  }
+  .recommend-grid > .recommendation-skeleton {
+    aspect-ratio: 0.72;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-mobile:has(#username) h1 {
+    font-size: 18px;
+    line-height: 24px;
+    white-space: nowrap;
+  }
+  .auth-mobile:has(#username) #username {
+    text-align: center;
+  }
+  .auth-mobile:has(#username) .auth-recovery {
+    margin-bottom: 8px;
+  }
+  .social-buttons button {
+    font-family: inherit;
+  }
+  .auth-mobile .social-buttons button {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}

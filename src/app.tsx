@@ -11,11 +11,9 @@ import {
   EyeOff,
   Heart,
   Layers,
-  LogOut,
   Menu,
   Minus,
   Plus,
-  ShoppingCart,
   Trash2,
   User,
   Wallet as WalletIcon,
@@ -49,7 +47,7 @@ import type {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 
-import { DesignAsset, GoogleMark } from "./components/design-assets";
+import { DesignAsset, GoogleMark, ScanMark } from "./components/design-assets";
 
 const NoticeContext = createContext<(message: string) => void>(() => {});
 const SessionContext = createContext<Session | null>(null);
@@ -428,7 +426,7 @@ function BottomNav() {
         <DesignAsset name="home" />
       </Link>
       <Link to="/favorites" aria-label="Favoritos">
-        <Heart />
+        <DesignAsset name="bottomHeart" />
       </Link>
       <Link
         to="/"
@@ -436,13 +434,14 @@ function BottomNav() {
         className="central-button"
         aria-label="Explorar novos lançamentos"
       >
-        <Plus />
+        <DesignAsset name="scanCircle" className="scan-circle" />
+        <ScanMark />
       </Link>
       <Link to="/cart" aria-label="Carrinho">
         <DesignAsset name="shop" />
       </Link>
       <Link to={session ? "/profile" : "/login"} aria-label="Minha conta">
-        <User />
+        <DesignAsset name="user" />
       </Link>
     </nav>
   );
@@ -1040,7 +1039,7 @@ function Detail({ id }: { id: string }) {
               disabled={action.isPending || !n.editions[edition]}
               onClick={() => void add()}
             >
-              <ShoppingCart />
+              <DesignAsset name="purchaseCart" />
             </Button>
           </div>
           <dl className="nft-metadata">
@@ -1185,7 +1184,15 @@ function Recommendations({ title }: { title: string }) {
     <section className="recommendations">
       <h2>{title}</h2>
       {result.isPending ? (
-        <Skeleton />
+        <div
+          className="recommend-grid"
+          role="status"
+          aria-label="Carregando recomendações"
+        >
+          {Array.from({ length: 5 }, (_, i) => (
+            <div className="skeleton recommendation-skeleton" key={i} />
+          ))}
+        </div>
       ) : result.isError ? (
         <Failure error={result.error} retry={() => void result.refetch()} />
       ) : (
@@ -1667,12 +1674,12 @@ function Auth({ register }: { register: boolean }) {
           onChange={(v) => setValues({ ...values, email: v })}
           required
           autoComplete="email"
-          placeholder="contato@email.com"
+          placeholder={register ? "Digite seu e-mail" : "contato@email.com"}
           error={errors.email}
         />
         <Field
           name="password"
-          placeholder="***********"
+          placeholder={register ? "Senha" : "***********"}
           label="Senha"
           type="password"
           value={values.password}
@@ -2351,23 +2358,35 @@ function AccountLayout({
         <h1>Meu perfil</h1>
         <nav aria-label="Conta do colecionador">
           <Link to="/profile" className={path === "/profile" ? "active" : ""}>
-            <User size={18} />
+            <DesignAsset name="accountUser" />
             Dados do perfil
           </Link>
           <Link to="/wallets" className={path === "/wallets" ? "active" : ""}>
-            <WalletIcon size={18} />
+            <DesignAsset name="accountWallet" />
             Carteiras
           </Link>
-          <Aux>Atividade</Aux>
+          <Aux>
+            <DesignAsset name="accountActivity" />
+            Atividade
+          </Aux>
           <Link to="/favorites">
-            <Heart size={18} />
+            <DesignAsset name="accountHeart" />
             Lista de interesse
           </Link>
-          <Aux>Ofertas</Aux>
-          <Aux>Arquivos baixados</Aux>
-          <Aux>Suporte</Aux>
+          <Aux>
+            <DesignAsset name="accountOffers" />
+            Ofertas
+          </Aux>
+          <Aux>
+            <DesignAsset name="accountDownload" />
+            Arquivos baixados
+          </Aux>
+          <Aux>
+            <DesignAsset name="accountSupport" />
+            Suporte
+          </Aux>
           <button onClick={() => void logout()}>
-            <LogOut size={18} />
+            <DesignAsset name="accountLogout" />
             Sair
           </button>
         </nav>
@@ -2897,7 +2916,7 @@ function DemoPanel() {
   return (
     <div className="demo-panel">
       <button
-        aria-label="Abrir controles de demonstração"
+        aria-label="Abrir controles de demonstração (Demo)"
         onClick={() => setOpen(!open)}
       >
         <Menu size={16} /> Demo
