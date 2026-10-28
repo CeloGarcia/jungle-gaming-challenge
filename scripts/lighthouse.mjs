@@ -148,6 +148,7 @@ try {
           startedAt: new Date().toISOString(),
           scenario: "success",
           build: "dist; conteúdo integral e mocks habilitados",
+          compression: "Brotli negociado pelo preview para JavaScript/CSS; demais recursos integrais",
         },
         runs,
         medians: summary,
