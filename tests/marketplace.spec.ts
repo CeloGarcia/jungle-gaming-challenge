@@ -83,15 +83,15 @@ async function login(
   await page.getByLabel(/^Senha(?: \*)?$/).fill(password);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(destination.replace("/", "\\/")));
-  await expect(
-    page.getByRole("heading", {
-      name:
-        destination === "/checkout"
-          ? "Perfil do colecionador"
-          : "Perfil do colecionador",
-      exact: true,
-    }),
-  ).toBeVisible();
+  if (destination === "/checkout")
+    await expect(page.locator(".checkout-layout")).toBeVisible();
+  else
+    await expect(
+      page.getByRole("heading", {
+        name: "Perfil do colecionador",
+        exact: true,
+      }),
+    ).toBeVisible();
 }
 async function add(page: Page) {
   await page.goto("/nft/nft-1");
@@ -330,6 +330,9 @@ test("idempotência concorrente, conteúdo conflitante e propriedade do pedido",
       displayName: "Demo",
       username: "demo",
       email: "demo@kurio.demo",
+      profileName: "Demo",
+      referral: "KURIO",
+      ens: "demo.eth",
     },
   };
   const [a, b] = await Promise.all([
@@ -486,24 +489,26 @@ test("perfil, avatar, senha, carteiras e validação do servidor", async ({
     .getByRole("button", { name: "Editar", exact: true })
     .first()
     .click();
-  const dialog = page.getByRole("dialog");
-  await dialog
+  const walletForm = page.getByRole("form", { name: "Carteira principal" });
+  await walletForm
     .getByLabel("Apelido da carteira", { exact: false })
     .fill("Carteira revisada");
-  await dialog
+  await walletForm
     .getByLabel("Endereço da carteira", { exact: false })
     .fill("invalido");
-  await dialog.getByRole("button", { name: "Salvar carteira" }).click();
-  await expect(dialog.getByRole("alert")).toContainText("Confira");
-  await dialog
+  await walletForm.getByRole("button", { name: "Salvar carteira" }).click();
+  await expect(walletForm.getByRole("alert")).toContainText("Confira");
+  await walletForm
     .getByLabel("Endereço da carteira", { exact: false })
     .fill("0x" + "a".repeat(40));
-  await dialog.getByRole("button", { name: "Salvar carteira" }).click();
-  await expect(dialog).not.toBeVisible();
+  await walletForm.getByRole("button", { name: "Salvar carteira" }).click();
+  await expect(page.getByRole("status")).toContainText("Carteira salva");
   await page.reload();
-  await expect(page.locator(".wallet-preview").first()).toContainText(
-    "Carteira revisada",
-  );
+  await expect(
+    page
+      .getByRole("form", { name: "Carteira principal" })
+      .getByLabel("Apelido da carteira", { exact: false }),
+  ).toHaveValue("Carteira revisada");
 });
 test("teclado, foco de diálogo, erro e skeleton com recuperação", async ({
   page,
@@ -582,6 +587,8 @@ test("expiração no checkout preserva contexto e dados para retomada", async ({
   page,
 }) => {
   await checkout(page);
+  if ((await page.locator(".collector-details").getAttribute("open")) === null)
+    await page.getByText("Dados do colecionador", { exact: true }).click();
   await page
     .getByLabel("Observação do colecionador (opcional)")
     .fill("Retomar esta observação");
@@ -648,4 +655,94 @@ test("regressão visual: início, detalhe, carrinho e pagamento", async ({
     animations: "disabled",
     maxDiffPixelRatio: 0.01,
   });
+});
+
+test("campos obrigatórios de carteira e colecionador são validados pela API", async ({
+  page,
+}) => {
+  await add(page);
+  await login(page);
+  const wallets = await rest(page, "/wallets"),
+    wallet = wallets.data[0];
+  const invalidWallet = await rest(
+    page,
+    "/wallets/" + wallet.id,
+    { ...wallet, ens: "", referral: "" },
+    "PATCH",
+  );
+  expect(invalidWallet.status).toBe(422);
+  expect(invalidWallet.data.error.fields).toHaveProperty("ens");
+  expect(invalidWallet.data.error.fields).toHaveProperty("referral");
+  const q = await rest(page, "/quotes", {
+    coupon: "",
+    network: wallet.network,
+  });
+  const invalidOrder = await rest(
+    page,
+    "/orders",
+    {
+      quoteId: q.data.id,
+      walletId: wallet.id,
+      collector: {
+        displayName: "Demo",
+        username: "demo",
+        email: "demo@kurio.demo",
+        profileName: "",
+        referral: "",
+        ens: "invalid",
+      },
+    },
+    "POST",
+    { "Idempotency-Key": "required-collector" },
+  );
+  expect(invalidOrder.status).toBe(422);
+  for (const key of ["profileName", "referral", "ens"])
+    expect(invalidOrder.data.error.fields).toHaveProperty(key);
+  expect((await rest(page, "/demo/state")).data.orders).toBe(0);
+});
+test("carrossel apresenta cinco recomendações e permite navegar por teclado", async ({
+  page,
+}) => {
+  await page.goto("/nft/nft-1");
+  const cards = page.locator(".recommend-grid .nft-card");
+  await expect(cards).toHaveCount(5);
+  const before = await cards.first().innerText();
+  const next = page.getByRole("button", {
+    name: "Recomendações, página 2",
+    exact: true,
+  });
+  await next.focus();
+  await page.keyboard.press("Enter");
+  await expect(next).toHaveAttribute("aria-pressed", "true");
+  await expect(cards).toHaveCount(5);
+  await expect(cards.first()).not.toHaveText(before);
+});
+test("telas principais permanecem acessíveis sem overflow nos quatro tamanhos", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await add(page);
+  await login(page);
+  for (const width of [390, 414, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const path of [
+      "/nft/nft-1",
+      "/cart",
+      "/checkout",
+      "/wallets",
+      "/profile",
+    ]) {
+      await page.goto(path);
+      await expect(page.locator("main")).toBeVisible();
+      await expect
+        .poll(
+          () =>
+            page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth + 1,
+            ),
+          { message: path + " em " + width + "px" },
+        )
+        .toBeTruthy();
+    }
+  }
 });

@@ -14,9 +14,10 @@ Vite e npm são escolhas de build. React/TypeScript implementam a interface; Tan
 | `src/bootstrap.tsx` | Router e guards |
 | `src/app.tsx` | Telas, consultas, mutations e interações |
 | `src/components/ui/` | Primitives compartilhadas |
+| `src/components/design-assets.tsx` | SVGs originais e composição das marcas |
 | `tests/` | E2E, cálculos monetários e baselines |
 
-Componentes e hooks não contêm respostas fictícias de rede. As fixtures e regras ficam na camada MSW e são reutilizadas em desenvolvimento, build e testes. Imagens e Roboto Mono são locais.
+Componentes e hooks não contêm respostas fictícias de rede. As fixtures e regras ficam na camada MSW e são reutilizadas em desenvolvimento, build e testes. Imagens e Roboto Mono são locais. O build gera arquivos Brotli a partir dos artefatos finais; o preview negocia br quando suportado e mantém o conteúdo descomprimido idêntico. Os arquivos originais continuam disponíveis para servidores sem suporte a Brotli.
 
 ## Contratos REST
 
@@ -83,11 +84,13 @@ O cliente descarta versões repetidas/antigas por recurso. Payloads não substit
 
 ## Validações e decisões de interface
 
-Cadastro exige usuário de 3–24 caracteres, e-mail, senha de 8+ caracteres e confirmação. Perfil exige nome de 2+ caracteres e usuário/e-mail únicos. Carteiras validam nome, apelido, perfil, tipo, rede, e-mail e endereço: 0x com 40 dígitos hex em Ethereum/Polygon ou base58 de 32–44 caracteres em Solana. ENS, quando preenchido, termina em .eth.
+Cadastro exige usuário de 3–24 caracteres, e-mail, senha de 8+ caracteres e confirmação. Perfil exige nome de 2+ caracteres e usuário/e-mail únicos. Carteiras validam nome, apelido, perfil, tipo, rede, e-mail e endereço: 0x com 40 dígitos hex em Ethereum/Polygon ou base58 de 32–44 caracteres em Solana. Código de indicação e ENS são obrigatórios nas carteiras; ENS termina em .eth. O formulário separa o sufixo fixo .eth do nome digitado.
 
-O checkout atualmente exige nome/usuário/e-mail e carteira/rede selecionados; outros dados são opcionais e entram no snapshot. A obrigatoriedade de campos adicionais marcados no Figma ainda precisa ser alinhada. Composição mobile, formulário inline de carteiras, modais de autenticação, recibo, galeria e recomendações também têm diferenças visuais conhecidas.
+O checkout exige nome de exibição, usuário, nome do perfil, e-mail, indicação e ENS, além da carteira/rede selecionadas. Os dados da carteira salva preenchem os campos adicionais sem substituir alterações do colecionador. ENS/carteira secundária e observação são opcionais. Cliente e API validam a obrigatoriedade. No mobile, os dados do colecionador ficam em uma seção expansível que abre automaticamente se um campo inválido impedir o envio; cupom e detalhes monetários continuam acessíveis. A conexão simulada e a revisão explícita precedem a confirmação.
 
-A identidade do mesmo NFT permanece coerente entre catálogo, carrinho e pedido, mesmo quando exemplos do design associam artes ou IDs diferentes a rótulos iguais. Quantidades ilustrativas não substituem estoque/edições da API. Preço anterior é riscado e o selo RARO fica contido no card para legibilidade.
+Carteiras são editadas inline, com estados de principal/secundária, cópia da principal, cancelamento e persistência. A galeria tem quatro miniaturas e as recomendações apresentam cinco itens por página, com indicadores operáveis por teclado; no mobile, os cinco cards podem ser percorridos horizontalmente. Ícones, marcas e a ilustração do recibo usam arquivos originais locais. O componente de assets conserva as dimensões nativas dos SVGs.
+
+A identidade do mesmo NFT permanece coerente entre catálogo, carrinho e pedido, mesmo quando exemplos do design associam artes ou IDs diferentes a rótulos iguais. Quantidades ilustrativas não substituem estoque/edições da API. Preço anterior é riscado e o selo RARO fica contido no card para legibilidade. A edição única permanece 1/1, corrigindo a repetição de 1/10 do exemplo mobile. Os fluxos de API conservam seus valores reais, em vez de reproduzir quantidades ilustrativas do desenho.
 
 Google/Facebook, newsletter, suporte e conteúdo editorial informam quando uma ação não é integrada. O botão central mobile leva a novos lançamentos. A exploração de transação é identificada como simulada. Diálogos usam título, Escape, contenção e devolução de foco; skeletons respeitam movimento reduzido.
 

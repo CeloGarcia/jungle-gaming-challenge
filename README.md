@@ -72,7 +72,7 @@ Para observar mudança em tempo real, adicione Emerald Ape ao carrinho e use **A
 
 ## Testes e auditorias
 
-Foram aprovados **40 testes E2E** no build, em Chrome desktop 1440×1000 e mobile 390×844, e dois testes monetários. Os testes também verificam overflow da home em 414 e 768 px.
+Foram aprovados **46 testes E2E** no build, em Chrome desktop 1440×1000 e mobile 390×844, e dois testes monetários. A suíte verifica ausência de overflow em início, detalhe, carrinho, pagamento, perfil e carteiras em 390, 414, 768 e 1440 px, além de navegação por teclado e validação dos campos obrigatórios na API.
 
 - Testes e oito baselines versionadas: `tests/`.
 - Relatório Playwright: [reports/e2e/html/index.html](reports/e2e/html/index.html).
@@ -82,15 +82,15 @@ Foram aprovados **40 testes E2E** no build, em Chrome desktop 1440×1000 e mobil
 
 | Página/perfil | Performance | Acessibilidade | Boas práticas | SEO |
 | --- | ---: | ---: | ---: | ---: |
-| Início/mobile | 96 | 100 | 100 | 92 |
-| Início/desktop | 100 | 100 | 100 | 92 |
+| Início/mobile | 95 | 100 | 100 | 92 |
+| Início/desktop | 98 | 100 | 100 | 92 |
 | Detalhe/mobile | 95 | 100 | 100 | 92 |
-| Detalhe/desktop | 99 | 100 | 100 | 92 |
+| Detalhe/desktop | 97 | 96 | 100 | 92 |
 
-As medianas usam três medições por combinação. Os relatórios preservam um aviso de IndexedDB nas medições seguintes à primeira; não foram usados perfis Chrome independentes em cada execução. O build emite aviso de chunk acima de 500 kB. Conteúdo, imagens, fontes e mocks participaram das medições, sem modo exclusivo de auditoria.
+As medianas usam três medições por combinação. Os relatórios preservam um aviso de IndexedDB nas medições seguintes à primeira; não foram usados perfis Chrome independentes em cada execução. O build emite um aviso de chunk acima de 500 kB. O build também gera arquivos Brotli, servidos pelo preview quando o navegador aceita br; a hospedagem deve negociar sua compressão equivalente. Conteúdo, imagens, fontes e mocks participaram das medições, sem modo exclusivo de auditoria.
 
 ## Publicação e limitações
 
 O projeto inclui fallback SPA em `vercel.json` e `public/_redirects`. A publicação e a URL pública ainda não foram realizadas. Após publicar, validar navegação direta, refresh, mocks e Socket.IO no ambiente hospedado.
 
-A conferência visual identificou ajustes ainda necessários em composição mobile, formulários, carteiras inline, autenticação, recibo e componentes compartilhados. Não se declara fidelidade integral ao Figma. Contratos, regras de estado e decisões estão em [ARCHITECTURE.md](ARCHITECTURE.md).
+A interface foi conferida contra as referências salvas do Figma, incluindo composição mobile/desktop, formulários, carteiras inline, autenticação, recibo e componentes compartilhados. Dados de negócio, conexão simulada e revisão explícita podem produzir estados diferentes dos exemplos ilustrativos do desenho. As baselines verificam regressão da implementação. Contratos, regras de estado e adaptações estão em [ARCHITECTURE.md](ARCHITECTURE.md).
