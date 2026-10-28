@@ -6,7 +6,6 @@ import { io } from "socket.io-client";
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   ChevronRight,
   Eye,
   EyeOff,
@@ -1428,6 +1427,20 @@ function SelectField({
     </div>
   );
 }
+function EnsField({name,value,onChange,error}:{name:string;value:string;onChange:(v:string)=>void;error?:string}) {
+ return <div className="field"><label htmlFor={name}>Nome ENS<span aria-hidden="true"> *</span></label><div className="ens-input"><select aria-label="Sufixo ENS" value=".eth" onChange={()=>{}}><option>.eth</option></select><input id={name} name={name} value={value.replace(/\.eth$/, "")} onChange={e=>onChange(e.target.value ? e.target.value.replace(/\.eth$/, "")+".eth" : "")} required aria-invalid={!!error} aria-describedby={error ? name+"-error" : undefined}/></div>{error && <p id={name+"-error"} className="field-error">{error}</p>}</div>;
+}
+function WalletFields({wallet,onChange,errors}:{wallet:Wallet;onChange:(v:Wallet)=>void;errors:Record<string,string>}) {
+ const field=(key:keyof Wallet,label:string,required=true)=><Field key={key} name={"wallet-"+key} label={label} value={String(wallet[key])} onChange={v=>onChange({...wallet,[key]:v})} required={required} type={key==="email"?"email":"text"} error={errors[key]}/>;
+ return <div className="form-grid wallet-fields">
+ {field("displayName","Nome de exibição")}{field("nickname","Apelido da carteira")}
+ <SelectField name="wallet-network" label="Rede" value={wallet.network} onChange={v=>onChange({...wallet,network:v as Network})} options={networks}/>{field("profileName","Nome do perfil")}
+ {field("address","Endereço da carteira")}{field("secondary","ENS ou carteira secundária (opcional)",false)}
+ <SelectField name="wallet-type" label="Tipo de carteira" value={wallet.type} onChange={v=>onChange({...wallet,type:v as Wallet["type"]})} options={["MetaMask","WalletConnect","Coinbase Wallet"]}/>{field("referral","Código de indicação")}
+ {field("email","E-mail")}<EnsField name="wallet-ens" value={wallet.ens} onChange={v=>onChange({...wallet,ens:v})} error={errors.ens}/>
+ </div>;
+}
+
 function Auth({ register }: { register: boolean }) {
   const mobile = useMobile();
   const navigate = useNavigate(),
@@ -1646,6 +1659,7 @@ function Checkout() {
   const wallet =
     wallets.data?.find((w) => w.id === selected) ||
     wallets.data?.find((w) => w.primary);
+  useEffect(()=>{if(wallet)setCollector(old=>({...old,profileName:old.profileName ?? wallet.profileName,referral:old.referral ?? wallet.referral,ens:old.ens ?? wallet.ens}));},[wallet]);
   const network = wallet?.network || "Ethereum";
   const quote = useQuote(coupon, network);
   const restoredCoupon = useRef(false);
@@ -1766,24 +1780,28 @@ function Checkout() {
           <details className="collector-details" open={!mobile} onInvalidCapture={e => { e.currentTarget.open = true; }}>
             <summary>Dados do colecionador</summary>
           <h1>Perfil do colecionador</h1>
-          <div className="form-grid">
+          <div className="form-grid collector-fields">
             {[
               ["displayName", "Nome de exibição"],
               ["username", "Nome de usuário"],
+              ["network", "Rede"],
               ["profileName", "Nome do perfil"],
+              ["address", "Endereço da carteira"],
+              ["secondary", "ENS ou carteira secundária (opcional)"],
+              ["type", "Tipo de carteira"],
+              ["referral", "Código de indicação"],
               ["email", "E-mail"],
               ["ens", "Nome ENS"],
-              ["secondary", "ENS ou carteira secundária (opcional)"],
-              ["referral", "Código de indicação"],
-            ].map(([key, label]) => (
+            ].map(([key, label]) => key === "ens" ? <EnsField key={key} name="collector-ens" value={collector.ens || ""} onChange={update("ens")} error={errors.ens}/> : (
               <Field
                 key={key}
                 name={`collector-${key}`}
                 label={label}
                 type={key === "email" ? "email" : "text"}
-                value={collector[key] || ""}
+                value={(["network","address","type"].includes(key) && wallet ? String(wallet[key as keyof Wallet]) : collector[key]) || ""}
+                readOnly={["network","address","type"].includes(key)}
                 onChange={update(key)}
-                required={["displayName", "username", "email"].includes(key)}
+                required={key !== "secondary"}
                 error={errors[key]}
               />
             ))}
@@ -2330,186 +2348,20 @@ const blankWallet: Wallet = {
   ens: "",
 };
 function WalletsPage() {
-  const owner = useOwner();
-  const wallets = useResource<Wallet[]>("/wallets", ["wallets", owner]);
-  const [editing, setEditing] = useState<Wallet | null>(null),
-    [usePrimary, setUsePrimary] = useState(false);
-  const action = useAction(),
-    notify = useNotice();
-  const errors = fieldErrors(action.error);
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!editing) return;
-    try {
-      await action.mutateAsync({
-        method: editing.id ? "patch" : "post",
-        path: editing.id ? `/wallets/${editing.id}` : "/wallets",
-        body: editing,
-      });
-      invalidate();
-      setEditing(null);
-      notify("Carteira salva e disponível no pagamento.");
-    } catch {
-      /* Form errors displayed below. */
-    }
-  };
-  return (
-    <AccountLayout title="Carteiras">
-      <p>
-        Estas carteiras ficam disponíveis no pagamento e para receber NFTs
-        comprados na simulação.
-      </p>
-      {wallets.isPending ? (
-        <Skeleton />
-      ) : wallets.isError ? (
-        <Failure error={wallets.error} retry={() => void wallets.refetch()} />
-      ) : (
-        <>
-          {[true, false].map((primary) => {
-            const wallet = wallets.data.find((w) => w.primary === primary);
-            return (
-              <section className="wallet-section" key={String(primary)}>
-                <div className="section-title">
-                  <h2>
-                    {primary ? "Carteira principal" : "Carteira secundária"}
-                  </h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setEditing(
-                        wallet || {
-                          ...blankWallet,
-                          primary,
-                          email: walletEmail(wallets.data),
-                          displayName: primary ? "Principal" : "Reserva",
-                        },
-                      )
-                    }
-                  >
-                    {wallet ? "Editar" : "Adicionar"}
-                  </Button>
-                </div>
-                {wallet ? (
-                  <div className="wallet-preview">
-                    <WalletIcon />
-                    <div>
-                      <h3>{wallet.displayName}</h3>
-                      <p>
-                        {wallet.nickname} · {wallet.type}
-                      </p>
-                      <p>
-                        {wallet.network} · {shortAddress(wallet.address)}
-                      </p>
-                      <p>{wallet.ens}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>
-                    Você ainda não adicionou uma carteira{" "}
-                    {primary ? "principal" : "secundária"}.
-                  </p>
-                )}
-                {!primary && (
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={usePrimary}
-                      onChange={(e) => {
-                        setUsePrimary(e.target.checked);
-                        if (e.target.checked) {
-                          const main = wallets.data.find((w) => w.primary);
-                          if (main)
-                            setEditing({
-                              ...main,
-                              id: wallet?.id || "",
-                              primary: false,
-                              displayName: "Reserva",
-                            });
-                        }
-                      }}
-                    />
-                    Igual à carteira principal
-                  </label>
-                )}
-              </section>
-            );
-          })}
-        </>
-      )}
-      <Dialog
-        open={!!editing}
-        onOpenChange={(open) => {
-          if (!open) setEditing(null);
-        }}
-        title={editing?.primary ? "Carteira principal" : "Carteira secundária"}
-        className="wallet-dialog"
-      >
-        {editing && (
-          <form onSubmit={save}>
-            <div className="form-grid">
-              {[
-                ["displayName", "Nome de exibição"],
-                ["nickname", "Apelido da carteira"],
-                ["profileName", "Nome do perfil"],
-                ["address", "Endereço da carteira"],
-                ["secondary", "ENS ou carteira secundária (opcional)"],
-                ["referral", "Código de indicação"],
-                ["email", "E-mail"],
-                ["ens", "Nome ENS"],
-              ].map(([key, label]) => (
-                <Field
-                  key={key}
-                  name={`wallet-${key}`}
-                  label={label}
-                  type={key === "email" ? "email" : "text"}
-                  value={editing[key as keyof Wallet] as string}
-                  onChange={(v) => setEditing({ ...editing, [key]: v })}
-                  required={[
-                    "displayName",
-                    "nickname",
-                    "profileName",
-                    "address",
-                    "email",
-                  ].includes(key)}
-                  error={errors[key]}
-                />
-              ))}
-              <SelectField
-                label="Rede"
-                name="wallet-network"
-                value={editing.network}
-                onChange={(v) =>
-                  setEditing({ ...editing, network: v as Network })
-                }
-                options={networks}
-              />
-              <SelectField
-                label="Tipo de carteira"
-                name="wallet-type"
-                value={editing.type}
-                onChange={(v) =>
-                  setEditing({ ...editing, type: v as Wallet["type"] })
-                }
-                options={["MetaMask", "WalletConnect", "Coinbase Wallet"]}
-              />
-            </div>
-            {action.isError && (
-              <p role="alert" className="field-error">
-                {errorMessage(action.error)}
-              </p>
-            )}
-            <Button type="submit" disabled={action.isPending}>
-              Salvar carteira
-            </Button>
-          </form>
-        )}
-      </Dialog>
-    </AccountLayout>
-  );
-}
-function walletEmail(wallets: Wallet[]) {
-  return wallets[0]?.email || "";
+ const owner=useOwner(),session=useSession(),notify=useNotice();
+ const wallets=useResource<Wallet[]>("/wallets",["wallets",owner]);
+ const [editing,setEditing]=useState<Wallet|null>(null),[usePrimary,setUsePrimary]=useState(false);
+ const initialized=useRef(false),action=useAction(),errors=fieldErrors(action.error);
+ useEffect(()=>{if(wallets.data && !initialized.current){initialized.current=true;setEditing(wallets.data.find(w=>w.primary)||{...blankWallet,primary:true,email:session?.user.email||""});}},[wallets.data,session]);
+ const save=async(e:FormEvent)=>{e.preventDefault();if(!editing)return;try{await action.mutateAsync({method:editing.id?"patch":"post",path:editing.id?"/wallets/"+editing.id:"/wallets",body:editing});invalidate();setEditing(null);notify("Carteira salva e disponível no pagamento.");}catch{/* Field errors stay in the form. */}};
+ if(wallets.isPending)return <AccountLayout title="Carteiras"><Skeleton/></AccountLayout>;
+ if(wallets.isError)return <AccountLayout title="Carteiras"><Failure error={wallets.error} retry={()=>void wallets.refetch()}/></AccountLayout>;
+ return <AccountLayout title="Carteiras"><p>Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados na simulação.</p>
+ {[true,false].map(primary=>{const wallet=wallets.data.find(w=>w.primary===primary),active=editing?.primary===primary;const title=primary?"Carteira principal":"Carteira secundária";return <section className="wallet-section" key={String(primary)}>
+ <div className="section-title"><h2>{title}</h2><div className="wallet-section-actions">{!primary && <label className="checkbox-label"><input type="checkbox" checked={usePrimary} disabled={!wallets.data.some(w=>w.primary)} onChange={e=>{setUsePrimary(e.target.checked);if(e.target.checked){const main=wallets.data.find(w=>w.primary);if(main)setEditing({...main,id:wallet?.id||"",primary:false,displayName:"Reserva"});}else if(editing?.primary===false)setEditing(null);}}/>Igual à carteira principal</label>}
+ <Button variant="ghost" size="sm" onClick={()=>{action.reset();setEditing(wallet||{...blankWallet,primary,email:session?.user.email||"",displayName:primary?"Principal":"Reserva"});}}>{wallet?"Editar":"Adicionar"}</Button></div></div>
+ {active && editing ? <form onSubmit={save} aria-label={title}><WalletFields wallet={editing} onChange={setEditing} errors={errors}/>{action.isError&&<p role="alert" className="field-error">{errorMessage(action.error)}</p>}<div className="wallet-form-actions"><Button type="submit" disabled={action.isPending}>Salvar carteira</Button><Button type="button" variant="ghost" onClick={()=>setEditing(null)}>Cancelar</Button></div></form> : wallet ? <div className="wallet-preview"><WalletIcon/><div><h3>{wallet.displayName}</h3><p>{wallet.nickname} · {wallet.type}</p><p>{wallet.network} · {shortAddress(wallet.address)}</p><p>{wallet.ens}</p></div></div> : <p>Você ainda não adicionou uma carteira {primary?"principal":"secundária"}.</p>}
+ </section>;})}</AccountLayout>;
 }
 function Favorites() {
   const owner = useOwner();

@@ -153,7 +153,7 @@ function wallet(primary: boolean, index: number): Wallet {
     address: `0x${(index === 1 ? "a91f" : "b82e").repeat(10)}`,
     secondary: "",
     type: primary ? "MetaMask" : "WalletConnect",
-    referral: "",
+    referral: "KURIO",
     email: "colecionador@kurio.demo",
     ens: primary ? "kurio.eth" : "nova.kurio.eth",
   };
@@ -536,14 +536,11 @@ async function createOrderInternal(
       "WALLET_NETWORK",
       "Selecione uma carteira da mesma rede.",
     );
-  if (
-    !body.collector.displayName ||
-    !body.collector.username ||
-    !/^\S+@\S+\.\S+$/.test(body.collector.email || "")
-  )
-    throw new Fault(422, "VALIDATION", "Confira os dados do colecionador.", {
-      displayName: "Preencha nome, usuário e e-mail válidos.",
-    });
+  const collectorErrors:Record<string,string>={};
+  for(const key of ["displayName","username","profileName","referral","ens"]){if(!body.collector?.[key]?.trim())collectorErrors[key]="Campo obrigatório.";}
+  if(!/^\S+@\S+\.\S+$/.test(body.collector?.email||""))collectorErrors.email="E-mail inválido.";
+  if(!/^[\w.-]+\.eth$/.test(body.collector?.ens||""))collectorErrors.ens="Use um nome terminado em .eth.";
+  if(Object.keys(collectorErrors).length)throw new Fault(422,"VALIDATION","Confira os dados do colecionador.",collectorErrors);
   const now = new Date().toISOString();
   const order: Order = {
     id: `order-${++db.sequence}`,
@@ -618,7 +615,7 @@ export function validateProfile(body: Record<string, unknown>, id: string) {
 }
 export function validateWallet(body: Wallet) {
   const fields: Record<string, string> = {};
-  for (const field of ["displayName", "nickname", "profileName"] as const)
+  for (const field of ["displayName", "nickname", "profileName", "referral", "ens"] as const)
     if (!body[field]?.trim()) fields[field] = "Campo obrigatório.";
   if (!["Ethereum", "Polygon", "Solana"].includes(body.network))
     fields.network = "Escolha uma rede.";
@@ -632,7 +629,7 @@ export function validateWallet(body: Wallet) {
     fields.address = "Endereço incompatível com a rede simulada.";
   if (!/^\S+@\S+\.\S+$/.test(body.email || ""))
     fields.email = "E-mail inválido.";
-  if (body.ens && !/^[\w.-]+\.eth$/.test(body.ens))
+  if (!/^[\w.-]+\.eth$/.test(body.ens || ""))
     fields.ens = "Use um nome terminado em .eth.";
   if (Object.keys(fields).length)
     throw new Fault(422, "VALIDATION", "Confira os dados da carteira.", fields);

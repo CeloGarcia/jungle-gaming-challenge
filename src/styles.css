@@ -2732,3 +2732,9 @@ a:hover {
  .collector-details{border-top:1px solid #3f2319;padding-top:12px}.collector-details>summary{display:list-item;font-size:13px;color:#cfb28c;cursor:pointer}.collector-details h1{font-size:18px;margin-top:16px}.collector-details .form-grid{margin:16px 0}
  .checkout-confirmation>.button{border-radius:32px;min-height:60px;font-size:16px}.checkout-confirmation .review-status{margin:0;font-size:11px}
 }
+
+.ens-input{display:flex;gap:12px;min-width:0}.ens-input select{width:80px;flex:none}.ens-input input{min-width:0;flex:1}
+.wallet-section{border:0;padding:0;margin-top:32px}.wallet-section .section-title{margin-bottom:12px}.wallet-section h2{font-size:16px}.wallet-section-actions{display:flex;gap:12px;align-items:center}.wallet-section-actions>.button{color:#e89b55;padding-right:0}.wallet-section-actions .checkbox-label{font-size:12px}.wallet-fields{gap:24px 28px}.wallet-form-actions{display:flex;gap:12px;margin-top:28px}
+.account-content:has(.wallet-section){background:transparent;padding:0}.account-content:has(.wallet-section)>h2{display:none}.account-content:has(.wallet-section)>.wallet-section:first-of-type{margin-top:24px}
+.collector-fields>.field:last-child{grid-column:1/-1;max-width:50%}.collector-fields textarea{min-height:160px}
+@media(max-width:600px){.wallet-section-actions{flex-wrap:wrap;justify-content:end}.wallet-fields{grid-template-columns:1fr}.collector-fields>.field:last-child{max-width:none}.wallet-section-actions .checkbox-label{font-size:10px}}
