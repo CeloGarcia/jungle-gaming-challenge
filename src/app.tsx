@@ -6,6 +6,7 @@ import { io } from "socket.io-client";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   ChevronRight,
   Eye,
   EyeOff,
@@ -20,22 +21,34 @@ import {
   Settings2,
   ShoppingBag,
   ShoppingCart,
+  Trash2,
   User,
   Wallet as WalletIcon,
   X,
   ZoomIn,
 } from "lucide-react";
 import { api, errorMessage, fieldErrors, queryClient, setSession } from "./api";
-import { categories, editions, eth, money, networks, wei } from "./domain";
+import {
+  categories,
+  editions,
+  eth,
+  money,
+  networks,
+  shortAddress,
+  wei,
+} from "./domain";
 import type {
   Cart,
   Catalog,
   CatalogParams,
   Edition,
+  Network,
   Nft,
   Order,
+  Quote,
   ResourceEvent,
   Session,
+  Wallet,
 } from "./domain";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
@@ -285,11 +298,11 @@ export default function App() {
           ) : pathname.startsWith("/nft/") ? (
             <Detail id={decodeURIComponent(pathname.slice(5))} />
           ) : pathname === "/cart" ? (
-            <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
+            <CartPage />
           ) : pathname === "/checkout" ? (
-            <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
+            <Checkout />
           ) : pathname.startsWith("/orders/") ? (
-            <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
+            <OrderPage id={pathname.slice(8)} />
           ) : pathname === "/profile" ? (
             <Empty title="Esta funcionalidade será adicionada na próxima etapa" />
           ) : pathname === "/wallets" ? (
@@ -1160,6 +1173,197 @@ function Recommendations({ title }: { title: string }) {
   );
 }
 
+function useQuote(coupon: string, network: Network, enabled = true) {
+  const owner = useOwner(),
+    cart = useCart();
+  return useQuery({
+    queryKey: ["quote", owner, cart.data?.revision, coupon, network],
+    queryFn: async ({ signal }) =>
+      (await api.post<Quote>("/quotes", { coupon, network }, { signal })).data,
+    enabled: enabled && !!cart.data?.items.length,
+    retry: false,
+  });
+}
+
+function Summary({ quote, children }: { quote?: Quote; children?: ReactNode }) {
+  return (
+    <div className="summary">
+      <h2>Resumo da carteira</h2>
+      {quote ? (
+        <dl>
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{money(quote.subtotal)}</dd>
+          </div>
+          <div>
+            <dt>Desconto do lançamento</dt>
+            <dd>(-) {money(quote.discount)}</dd>
+          </div>
+          <div>
+            <dt>
+              Taxa de rede <small>Taxa estimada</small>
+            </dt>
+            <dd>{money(quote.fee)}</dd>
+          </div>
+          <div className="summary-total">
+            <dt>Total</dt>
+            <dd>{money(quote.total)}</dd>
+          </div>
+        </dl>
+      ) : (
+        <div
+          className="skeleton summary-skeleton"
+          aria-label="Carregando resumo"
+        />
+      )}
+      {children}
+    </div>
+  );
+}
+
+function Coupon({
+  value,
+  onApply,
+}: {
+  value: string;
+  onApply: (v: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <div className="coupon">
+      <label htmlFor="coupon">Código promocional</label>
+      <div>
+        <input
+          id="coupon"
+          placeholder="Digite o código promocional..."
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <Button type="button" size="sm" onClick={() => onApply(draft)}>
+          Aplicar
+        </Button>
+      </div>
+      {value && (
+        <button
+          type="button"
+          onClick={() => {
+            setDraft("");
+            onApply("");
+          }}
+        >
+          Remover cupom {value}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CartPage() {
+  const cart = useCart(),
+    action = useAction();
+  const [coupon, setCoupon] = useState("");
+  const quote = useQuote(coupon, "Ethereum");
+  const restoredCoupon = useRef(false);
+  useEffect(() => {
+    if (cart.data && !restoredCoupon.current) {
+      restoredCoupon.current = true;
+      setCoupon(cart.data.coupon);
+    }
+  }, [cart.data]);
+  const change = async (id: string, quantity?: number) => {
+    try {
+      await action.mutateAsync({
+        method: quantity ? "patch" : "delete",
+        path: `/cart/items/${encodeURIComponent(id)}`,
+        body: quantity ? { quantity } : undefined,
+      });
+      invalidate();
+    } catch {
+      /* Mutation displays the error. */
+    }
+  };
+  return (
+    <>
+      <Breadcrumb label="Carrinho" />
+      <h1 className="mobile-page-title">Carrinho de NFTs</h1>
+      {cart.isPending ? (
+        <Skeleton detail />
+      ) : cart.isError ? (
+        <Failure error={cart.error} retry={() => void cart.refetch()} />
+      ) : !cart.data.items.length ? (
+        <Empty title="Seu carrinho está vazio">
+          <Button asChild>
+            <Link to="/">Continuar explorando</Link>
+          </Button>
+        </Empty>
+      ) : (
+        <section className="cart-layout">
+          <div>
+            <div className="cart-table-head">
+              <span>NFTs</span>
+              <span>Preço</span>
+              <span>Edições</span>
+              <span>Total</span>
+            </div>
+            {cart.data.items.map((item) => (
+              <article className="cart-item" key={item.id}>
+                <Link to="/nft/$id" params={{ id: item.nftId }}>
+                  <img
+                    src={item.nft.image}
+                    alt={item.nft.name}
+                    width={110}
+                    height={110}
+                  />
+                  <div>
+                    <h2>{item.nft.name}</h2>
+                    <p>ID do token: #{item.nft.tokenId}</p>
+                    <p>Edição: {item.edition}</p>
+                  </div>
+                </Link>
+                <span>{money(item.nft.price)}</span>
+                <Quantity
+                  value={item.quantity}
+                  max={item.nft.editions[item.edition]}
+                  onChange={(v) => void change(item.id, v)}
+                />
+                <strong>
+                  {money(eth(wei(item.nft.price) * BigInt(item.quantity)))}
+                </strong>
+                <button
+                  aria-label={`Remover ${item.nft.name}`}
+                  disabled={action.isPending}
+                  onClick={() => void change(item.id)}
+                >
+                  <Trash2 size={18} />
+                </button>
+              </article>
+            ))}
+          </div>
+          <div className="cart-summary">
+            <Coupon value={coupon} onApply={setCoupon} />
+            {quote.isError ? (
+              <Failure error={quote.error} retry={() => void quote.refetch()} />
+            ) : (
+              <Summary quote={quote.data}>
+                <Button asChild disabled={!quote.data}>
+                  <Link to="/checkout">
+                    Conectar e finalizar <ArrowRight size={17} />
+                  </Link>
+                </Button>
+                <Link className="continue-link" to="/">
+                  Continuar explorando
+                </Link>
+              </Summary>
+            )}
+          </div>
+        </section>
+      )}
+      <Recommendations title="Colecionadores também viram" />
+    </>
+  );
+}
+
 type FieldProps = {
   label: string;
   name: string;
@@ -1386,6 +1590,496 @@ function Auth({ register }: { register: boolean }) {
             {content}
           </Dialog>
         </div>
+      )}
+    </>
+  );
+}
+
+function Checkout() {
+  const session = useSession(),
+    navigate = useNavigate(),
+    notify = useNotice(),
+    owner = useOwner();
+  const cart = useCart();
+  const wallets = useResource<Wallet[]>(
+    "/wallets",
+    ["wallets", owner],
+    !!session,
+  );
+  const [draft] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem(`kurio.checkout:${owner}`) || "{}",
+      ) as { selected?: string; collector?: Record<string, string> };
+    } catch {
+      return {};
+    }
+  });
+  const [selected, setSelected] = useState(draft.selected || ""),
+    [connected, setConnected] = useState(false),
+    [provider, setProvider] = useState("MetaMask"),
+    [coupon, setCoupon] = useState(""),
+    [review, setReview] = useState<string | null>(null),
+    [collector, setCollector] = useState<Record<string, string>>(
+      draft.collector || {},
+    ),
+    [connection, setConnection] = useState(false);
+  const action = useAction();
+  useEffect(() => {
+    localStorage.setItem(
+      `kurio.checkout:${owner}`,
+      JSON.stringify({ selected, collector }),
+    );
+  }, [owner, selected, collector]);
+  const recover = async () => {
+    const stored = localStorage.getItem(`kurio.attempt:${owner}`);
+    if (!stored) return false;
+    const attempt = JSON.parse(stored);
+    const order = (
+      await api.get<Order>("/orders", { params: { attempt: attempt.key } })
+    ).data;
+    await navigate({ to: "/orders/$id", params: { id: order.id } });
+    return true;
+  };
+  const wallet =
+    wallets.data?.find((w) => w.id === selected) ||
+    wallets.data?.find((w) => w.primary);
+  const network = wallet?.network || "Ethereum";
+  const quote = useQuote(coupon, network);
+  const restoredCoupon = useRef(false);
+  useEffect(() => {
+    if (cart.data && !restoredCoupon.current) {
+      restoredCoupon.current = true;
+      setCoupon(cart.data.coupon);
+    }
+  }, [cart.data]);
+  useEffect(() => {
+    if (session) setCollector((old) => ({ ...session.user, ...old }));
+  }, [session]);
+  useEffect(() => {
+    if (wallet?.id) setSelected(wallet.id);
+  }, [wallet?.id]);
+  useEffect(() => {
+    const stored = localStorage.getItem(`kurio.attempt:${owner}`);
+    if (stored) {
+      try {
+        const attempt = JSON.parse(stored);
+        if (attempt.orderId)
+          void navigate({ to: "/orders/$id", params: { id: attempt.orderId } });
+        else void recover().catch(() => {});
+      } catch {
+        /* Invalid interrupted attempt can be reviewed again. */
+      }
+    }
+  }, [owner, navigate]);
+  if (cart.isPending || wallets.isPending) return <Skeleton detail />;
+  if (cart.isError || wallets.isError)
+    return (
+      <Failure
+        error={cart.error || wallets.error}
+        retry={() => {
+          void cart.refetch();
+          void wallets.refetch();
+        }}
+      />
+    );
+  if (!cart.data?.items.length)
+    return (
+      <Empty title="Seu carrinho está vazio">
+        {localStorage.getItem(`kurio.attempt:${owner}`) && (
+          <Button
+            onClick={() =>
+              void recover().catch((error) => notify(errorMessage(error)))
+            }
+          >
+            Recuperar pedido
+          </Button>
+        )}
+        <Link to="/">Explorar NFTs</Link>
+      </Empty>
+    );
+  const errors = fieldErrors(action.error);
+  const update = (key: string) => (value: string) =>
+    setCollector((v) => ({ ...v, [key]: value }));
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!connected || !wallet) {
+      notify("Conecte uma carteira simulada para continuar.");
+      return;
+    }
+    try {
+      const fresh = (await api.post<Quote>("/quotes", { coupon, network }))
+        .data;
+      if (review !== fresh.fingerprint) {
+        queryClient.setQueryData(
+          ["quote", owner, cart.data.revision, coupon, network],
+          fresh,
+        );
+        setReview(fresh.fingerprint);
+        notify(
+          "Revise os itens e o total. Clique em Confirmar compra para enviar.",
+        );
+        return;
+      }
+      const storageKey = `kurio.attempt:${owner}`,
+        stored = localStorage.getItem(storageKey);
+      const body = { quoteId: fresh.id, walletId: wallet.id, collector };
+      let attempt = stored ? JSON.parse(stored) : null;
+      if (!attempt || JSON.stringify(attempt.body) !== JSON.stringify(body))
+        attempt = { key: crypto.randomUUID(), body };
+      localStorage.setItem(storageKey, JSON.stringify(attempt));
+      const order = (await action.mutateAsync({
+        path: "/orders",
+        body: attempt.body,
+        headers: { "Idempotency-Key": attempt.key },
+      })) as Order;
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ ...attempt, orderId: order.id }),
+      );
+      void navigate({ to: "/orders/$id", params: { id: order.id } });
+    } catch (error) {
+      if (localStorage.getItem(`kurio.attempt:${owner}`)) {
+        try {
+          if (await recover()) return;
+        } catch {
+          /* An uncreated attempt can be retried. */
+        }
+      }
+      if (
+        (error as { response?: { status: number } }).response?.status === 409
+      ) {
+        setReview(null);
+        invalidate();
+      }
+      notify(errorMessage(error));
+    }
+  };
+  return (
+    <>
+      <Breadcrumb label="Pagamento" />
+      <form className="checkout-layout" onSubmit={submit}>
+        <section>
+          <h1>Perfil do colecionador</h1>
+          <div className="form-grid">
+            {[
+              ["displayName", "Nome de exibição"],
+              ["username", "Nome de usuário"],
+              ["profileName", "Nome do perfil"],
+              ["email", "E-mail"],
+              ["ens", "Nome ENS"],
+              ["secondary", "ENS ou carteira secundária (opcional)"],
+              ["referral", "Código de indicação"],
+            ].map(([key, label]) => (
+              <Field
+                key={key}
+                name={`collector-${key}`}
+                label={label}
+                type={key === "email" ? "email" : "text"}
+                value={collector[key] || ""}
+                onChange={update(key)}
+                required={["displayName", "username", "email"].includes(key)}
+                error={errors[key]}
+              />
+            ))}
+            <div className="field">
+              <label htmlFor="collector-note">
+                Observação do colecionador (opcional)
+              </label>
+              <textarea
+                id="collector-note"
+                value={collector.note || ""}
+                onChange={(e) => update("note")(e.target.value)}
+              />
+            </div>
+          </div>
+          <h2>Pagamento com carteira</h2>
+          <p>Conexão e pagamento simulados. Nenhuma extensão será aberta.</p>
+          {wallets.data?.length ? (
+            <div className="wallet-options">
+              {wallets.data.map((w) => (
+                <button
+                  type="button"
+                  key={w.id}
+                  className={wallet?.id === w.id ? "selected" : ""}
+                  onClick={() => {
+                    setSelected(w.id);
+                    setConnected(false);
+                    setReview(null);
+                  }}
+                >
+                  <WalletIcon />
+                  <span>
+                    {w.displayName}
+                    <strong>{w.ens || shortAddress(w.address)}</strong>Rede{" "}
+                    {w.network}
+                  </span>
+                  {wallet?.id === w.id && <Check size={18} />}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p>
+              Cadastre uma carteira para continuar.{" "}
+              <Link to="/wallets">Adicionar carteira</Link>
+            </p>
+          )}
+          {wallet && (
+            <div className="form-grid">
+              <Field
+                label="Endereço da carteira"
+                name="checkout-address"
+                value={wallet.address}
+                readOnly
+              />
+              <Field
+                label="Rede"
+                name="checkout-network"
+                value={wallet.network}
+                readOnly
+              />
+            </div>
+          )}
+          <h2>Carteira e rede</h2>
+          <div className="provider-options">
+            {["WalletConnect", "MetaMask", "Coinbase Wallet"].map((name) => (
+              <button
+                type="button"
+                key={name}
+                className={provider === name ? "selected" : ""}
+                onClick={() => {
+                  setProvider(name);
+                  setConnected(false);
+                  setReview(null);
+                }}
+              >
+                <span>{name[0]}</span>
+                {name}
+              </button>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              connected ? setConnected(false) : setConnection(true)
+            }
+          >
+            {connected ? "Desconectar carteira" : "Conectar carteira"}
+          </Button>
+          <p role="status">
+            {connected
+              ? "Carteira conectada (simulação)"
+              : "Carteira desconectada"}
+          </p>
+        </section>
+        <section className="checkout-summary">
+          <h2>Seus NFTs</h2>
+          {cart.data.items.map((i) => (
+            <div className="checkout-item" key={i.id}>
+              <img src={i.nft.image} alt="" width={72} height={72} />
+              <span>
+                {i.nft.name}
+                <small>
+                  ID do token: #{i.nft.tokenId} · {i.edition} (x {i.quantity})
+                </small>
+              </span>
+              <strong>
+                {money(eth(wei(i.nft.price) * BigInt(i.quantity)))}
+              </strong>
+            </div>
+          ))}
+          <Coupon
+            value={coupon}
+            onApply={(v) => {
+              setCoupon(v);
+              setReview(null);
+            }}
+          />
+          {quote.isError ? (
+            <Failure error={quote.error} retry={() => void quote.refetch()} />
+          ) : (
+            <Summary quote={quote.data} />
+          )}
+          <div className="review-status" role="status">
+            {review && review === quote.data?.fingerprint
+              ? "Revisão concluída. Confira o total acima e confirme sua compra."
+              : "Revise os dados e os valores antes de enviar."}
+          </div>
+          <Button
+            type="submit"
+            disabled={action.isPending || !connected || !quote.data || !wallet}
+          >
+            {action.isPending
+              ? "Enviando…"
+              : review === quote.data?.fingerprint
+                ? "Confirmar compra"
+                : "Revisar compra"}
+          </Button>
+          {action.isError && (
+            <p role="alert" className="field-error">
+              {errorMessage(action.error)} Sua tentativa foi preservada. Tente
+              novamente para recuperar o mesmo pedido.
+            </p>
+          )}
+        </section>
+      </form>
+      <Dialog
+        open={connection}
+        onOpenChange={setConnection}
+        title={`Conectar ${provider}`}
+        description="Esta conexão é simulada e não acessa nenhuma carteira real."
+      >
+        <div className="dialog-actions">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setConnection(false);
+              setConnected(false);
+              notify("Conexão recusada. Sua carteira permanece desconectada.");
+            }}
+          >
+            Recusar
+          </Button>
+          <Button
+            onClick={() => {
+              setConnection(false);
+              setConnected(true);
+              notify("Carteira conectada na simulação.");
+            }}
+          >
+            Conectar na simulação
+          </Button>
+        </div>
+      </Dialog>
+    </>
+  );
+}
+
+function OrderPage({ id }: { id: string }) {
+  const owner = useOwner(),
+    navigate = useNavigate(),
+    notify = useNotice();
+  const result = useQuery({
+    queryKey: ["order", owner, id],
+    queryFn: async ({ signal }) =>
+      (await api.get<Order>(`/orders/${id}`, { signal })).data,
+    refetchInterval: (query) =>
+      query.state.data?.status === "pending" ? 1000 : false,
+    staleTime: 0,
+  });
+  useEffect(() => {
+    if (result.data?.status === "confirmed") {
+      localStorage.removeItem(`kurio.attempt:${owner}`);
+      localStorage.removeItem(`kurio.checkout:${owner}`);
+      void queryClient.invalidateQueries({ queryKey: ["cart", owner] });
+    }
+  }, [result.data?.status, owner]);
+  if (result.isPending) return <Skeleton detail />;
+  if (result.isError)
+    return <Failure error={result.error} retry={() => void result.refetch()} />;
+  const order = result.data;
+  const receipt = (
+    <div className="receipt">
+      <p className="success-mark">
+        <Check size={28} />
+      </p>
+      <h1>Seus NFTs agora estão na sua carteira</h1>
+      <p>
+        Pedido confirmado na simulação. Nenhuma transação foi enviada à
+        blockchain.
+      </p>
+      <dl className="receipt-meta">
+        <div>
+          <dt>ID da transação</dt>
+          <dd>{shortAddress(order.transaction)}</dd>
+        </div>
+        <div>
+          <dt>Data</dt>
+          <dd>
+            {new Date(order.createdAt).toLocaleString("pt-BR", {
+              timeZone: "America/Sao_Paulo",
+            })}
+          </dd>
+        </div>
+        <div>
+          <dt>Carteira</dt>
+          <dd>{shortAddress(order.wallet.address)}</dd>
+        </div>
+      </dl>
+      <h2>Detalhes da transação</h2>
+      {order.quote.items.map((i) => (
+        <div className="receipt-item" key={i.id}>
+          <img src={i.nft.image} width={64} height={64} alt="" />
+          <span>
+            {i.nft.name}
+            <small>
+              {i.edition} · Edições: {i.quantity}
+            </small>
+          </span>
+          <strong>{money(eth(wei(i.nft.price) * BigInt(i.quantity)))}</strong>
+        </div>
+      ))}
+      <Summary quote={order.quote} />
+      <Button
+        onClick={() =>
+          notify(
+            `Exploração simulada: ${order.transaction}. Esta referência não existe no Etherscan.`,
+          )
+        }
+      >
+        Ver no Etherscan (simulado)
+      </Button>
+    </div>
+  );
+  return (
+    <>
+      <Breadcrumb label="Pedido" />
+      {order.status === "pending" ? (
+        <div className="state-box" role="status">
+          <div className="spinner" />
+          <h1>Pedido pendente</h1>
+          <p>
+            Aguardando a resposta da simulação. Você pode recarregar esta página
+            com segurança.
+          </p>
+          <p>Referência: {order.id}</p>
+          <Button variant="outline" onClick={() => void result.refetch()}>
+            Consultar estado
+          </Button>
+        </div>
+      ) : order.status === "declined" ? (
+        <div className="state-box" role="alert">
+          <h1>Pagamento recusado</h1>
+          <p>
+            A simulação recusou o pagamento. Seus itens permanecem no carrinho.
+          </p>
+          <Button
+            onClick={() => {
+              localStorage.removeItem(`kurio.attempt:${owner}`);
+              void navigate({ to: "/cart" });
+            }}
+          >
+            Voltar ao carrinho
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="receipt-background">
+            <h1>Pagamento</h1>
+            <Summary quote={order.quote} />
+          </div>
+          <Dialog
+            open
+            onOpenChange={(open) => {
+              if (!open) void navigate({ to: "/" });
+            }}
+            title="Pedido confirmado"
+            className="receipt-dialog"
+          >
+            {receipt}
+          </Dialog>
+        </>
       )}
     </>
   );
