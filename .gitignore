@@ -6,3 +6,24 @@ playwright-report/
 *.tsbuildinfo
 .delivery/
 .verification/
+
+# Referências e materiais locais de trabalho
+/.local/
+/docs/
+*.[mM][dD]
+!/README.md
+!/ARCHITECTURE.md
+/scripts/build-manifest.mjs
+/scripts/build-requirements.mjs
+/scripts/download-figma-assets.ps1
+/scripts/optimize-assets.mjs
+/scripts/pin-deps.mjs
+/scripts/update-progress.mjs
+/scripts/verify-clean.mjs
+
+# Entregar somente as evidências solicitadas pelo desafio
+/reports/*
+!/reports/lighthouse/
+!/reports/e2e/
+/reports/e2e/*
+!/reports/e2e/html/
