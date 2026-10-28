@@ -54,6 +54,8 @@ import type {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 
+import { DesignAsset, GoogleMark } from "./components/design-assets";
+
 const NoticeContext = createContext<(message: string) => void>(() => {});
 const SessionContext = createContext<Session | null>(null);
 function useSession() {
@@ -1550,7 +1552,7 @@ function Auth({ register }: { register: boolean }) {
             )
           }
         >
-          <b>G</b>Continuar com Google
+          <GoogleMark />Continuar com Google
         </button>
         <button
           onClick={() =>
@@ -1559,7 +1561,7 @@ function Auth({ register }: { register: boolean }) {
             )
           }
         >
-          <b>f</b>Continuar com Facebook
+          <DesignAsset name="facebook" />Continuar com Facebook
         </button>
       </div>
       <p className="auth-switch">
@@ -1984,7 +1986,7 @@ function OrderPage({ id }: { id: string }) {
   const receipt = (
     <div className="receipt">
       <p className="success-mark">
-        <Check size={28} />
+        <DesignAsset name="thankYou" />
       </p>
       <h1>Seus NFTs agora estão na sua carteira</h1>
       <p>

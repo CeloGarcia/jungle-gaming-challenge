@@ -11,7 +11,9 @@
   --color-accent: #e89b55;
   --color-foreground: #f5f1eb;
   --color-muted: #cfb28c;
-  --color-border: #55321f;
+  --color-border: #3f2319;
+  --color-surface-raised: #2f1d15;
+  --color-gray-light: #ededed;
   --font-mono: "Roboto Mono", monospace;
 }
 :root {
@@ -25,7 +27,8 @@
   --primary: #d28a4c;
   --background: #140d0a;
   --foreground: #f5f1eb;
-  --border: #55321f;
+  --border: #3f2319;
+  --surface-raised: #2f1d15;
   --radius: 6px;
 }
 * {
@@ -111,7 +114,7 @@ textarea:focus-visible {
 @media(max-width:600px){
   .mobile-detail-back{display:flex;align-items:center;gap:10px;font-size:12px;margin:0 0 20px;min-height:32px}
   .mobile-detail-back+.breadcrumb{display:none}
-  .purchase-row{position:fixed!important;left:0;right:0;bottom:0;z-index:40;margin:0!important;display:grid!important;grid-template-columns:90px 1fr 44px;gap:4px 12px!important;padding:12px 20px max(12px,env(safe-area-inset-bottom));background:#241612;border-top:1px solid #55321f;border-radius:18px 18px 0 0}
+  .purchase-row{position:fixed!important;left:0;right:0;bottom:0;z-index:40;margin:0!important;display:grid!important;grid-template-columns:90px 1fr 44px;gap:4px 12px!important;padding:12px 20px max(12px,env(safe-area-inset-bottom));background:#241612;border-top:1px solid var(--border);border-radius:18px 18px 0 0}
   .purchase-row>.quantity{grid-column:1;grid-row:1;max-width:90px;min-height:32px}
   .purchase-row>.quantity input{width:26px!important}
   .purchase-row>.quantity button{padding:6px}
@@ -125,7 +128,7 @@ textarea {
   width: 100%;
   min-width: 0;
   background: #38220f;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   border-radius: 6px;
   color: #f5f1eb;
   padding: 12px;
@@ -200,7 +203,7 @@ strong {
   gap: 24px;
 }
 .header.with-divider {
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
 }
 .wordmark {
   font-weight: 700;
@@ -278,7 +281,7 @@ a:hover {
   background: #241612;
   padding: 16px;
   gap: 12px;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   width: 450px;
   border-radius: 8px;
 }
@@ -522,7 +525,7 @@ a:hover {
 .pagination button {
   min-width: 32px;
   height: 34px;
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   padding: 4px 9px;
 }
 .pagination button[aria-current="page"] {
@@ -705,7 +708,7 @@ a:hover {
   font-weight: 700;
 }
 .edition-picker button {
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   border-radius: 6px;
   padding: 7px 13px;
 }
@@ -726,7 +729,7 @@ a:hover {
   display: flex;
   align-items: center;
   min-height: 40px;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   border-radius: 6px;
   max-width: 120px;
   flex-shrink: 0;
@@ -750,7 +753,7 @@ a:hover {
 }
 .nft-metadata {
   font-size: 12px;
-  border-top: 1px solid #55321f;
+  border-top: 1px solid var(--border);
   padding-top: 20px;
 }
 .nft-metadata > div {
@@ -770,7 +773,7 @@ a:hover {
 .detail-tabs > div {
   display: flex;
   gap: 40px;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 28px;
 }
 .detail-tabs > div button {
@@ -814,7 +817,7 @@ a:hover {
   display: grid;
   grid-template-columns: 3fr 1fr 1.2fr 1fr;
   gap: 14px;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 16px;
 }
 .cart-item {
@@ -824,7 +827,7 @@ a:hover {
   gap: 14px;
   align-items: center;
   padding: 24px 20px 24px 0;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
 }
 .cart-item > a {
@@ -895,7 +898,7 @@ a:hover {
 }
 .summary-total {
   padding-top: 20px;
-  border-top: 1px solid #55321f;
+  border-top: 1px solid var(--border);
   font-weight: 700;
   font-size: 16px !important;
 }
@@ -988,7 +991,7 @@ a:hover {
   display: flex;
   gap: 12px;
   padding: 16px 0;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   align-items: center;
   font-size: 12px;
 }
@@ -1030,7 +1033,7 @@ a:hover {
   gap: 12px;
   text-align: left;
   padding: 16px;
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px;
 }
 .wallet-options > button > span {
@@ -1060,7 +1063,7 @@ a:hover {
   margin-bottom: 24px;
 }
 .provider-options button {
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1146,7 +1149,7 @@ a:hover {
 .upload-label {
   display: flex;
   padding: 9px 16px;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
 }
@@ -1157,7 +1160,7 @@ a:hover {
   position: absolute;
 }
 .password-form {
-  border-top: 1px solid #55321f;
+  border-top: 1px solid var(--border);
   margin-top: 32px;
   padding-top: 28px;
 }
@@ -1169,7 +1172,7 @@ a:hover {
 }
 .wallet-section {
   padding: 24px 0;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
 }
 .section-title {
   display: flex;
@@ -1300,7 +1303,7 @@ a:hover {
   font-size: 12px;
 }
 .wallet-chips {
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   background: #38220f;
   color: #e89b55;
   padding: 2px 8px;
@@ -1332,7 +1335,7 @@ a:hover {
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
   background: #241612;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 40px;
   box-shadow: 0 24px 100px #0008;
@@ -1388,7 +1391,7 @@ a:hover {
   display: flex;
   justify-content: center;
   gap: 60px;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   margin: 0 0 25px;
 }
 .auth-tabs > a {
@@ -1433,7 +1436,7 @@ a:hover {
   top: 50%;
   width: 26%;
   height: 1px;
-  background: #55321f;
+  background: var(--border);
 }
 .social-divider:before {
   left: 0;
@@ -1452,7 +1455,7 @@ a:hover {
   align-items: center;
   gap: 20px;
   background: #38220f !important;
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   border-radius: 6px;
   padding: 12px;
   font-size: 12px;
@@ -1506,7 +1509,7 @@ a:hover {
   gap: 20px;
   justify-content: space-between;
   font-size: 11px;
-  border-bottom: 1px solid #55321f;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 24px;
   margin: 28px 0;
 }
@@ -1581,7 +1584,7 @@ a:hover {
   gap: 5px;
   align-items: center;
   background: #241612 !important;
-  border: 1px solid #55321f !important;
+  border: 1px solid var(--border) !important;
   padding: 6px 8px;
   border-radius: 6px;
 }
@@ -1593,7 +1596,7 @@ a:hover {
   max-height: 70dvh;
   overflow-y: auto;
   background: #241612;
-  border: 1px solid #55321f;
+  border: 1px solid var(--border);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -1650,7 +1653,7 @@ a:hover {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #55321f;
+  border: 3px solid var(--border);
   border-top-color: #d28a4c;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -2003,7 +2006,7 @@ a:hover {
     gap: 16px;
     justify-content: space-between;
     width: 100%;
-    border-bottom: 1px solid #55321f;
+    border-bottom: 1px solid var(--border);
   }
   .catalog-tabs button {
     font-size: 10px;
@@ -2117,7 +2120,7 @@ a:hover {
     padding: 10px 28px 12px;
     background: #241612;
     z-index: 40;
-    border-top: 1px solid #55321f;
+    border-top: 1px solid var(--border);
     align-items: center;
     justify-content: space-between;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -2384,7 +2387,7 @@ a:hover {
   }
   .account-layout aside nav {
     padding-bottom: 15px;
-    border-bottom: 1px solid #55321f;
+    border-bottom: 1px solid var(--border);
   }
   .account-content {
     padding: 24px 18px;
@@ -2426,7 +2429,7 @@ a:hover {
   .footer-features > article {
     padding: 0 0 20px;
     border: 0;
-    border-bottom: 1px solid #55321f;
+    border-bottom: 1px solid var(--border);
     display: grid;
     grid-template-columns: 52px 1fr;
     gap: 0 16px;
@@ -2629,3 +2632,14 @@ a:hover {
     font-size: 12px;
   }
 }
+
+/* Original design assets retain their intrinsic SVG dimensions. */
+.google-mark{position:relative;display:inline-block;width:20px;height:20px;flex:none}
+.google-mark img{position:absolute;max-width:none}
+.google-mark img:nth-child(1){left:7.11%;top:57.68%}
+.google-mark img:nth-child(2){left:50%;top:71.33%}
+.google-mark img:nth-child(3){left:0;top:24.69%}
+.google-mark img:nth-child(4){left:47.07%;top:38.28%}
+.google-mark img:nth-child(5){left:50%;top:38.28%}
+.google-mark img:nth-child(6){left:7.11%;top:0}
+.google-mark img:nth-child(7){left:50%;top:0}
