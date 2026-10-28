@@ -11,15 +11,11 @@ import {
   Eye,
   EyeOff,
   Heart,
-  Home as HomeIcon,
   Layers,
   LogOut,
   Menu,
   Minus,
   Plus,
-  Search,
-  Settings2,
-  ShoppingBag,
   ShoppingCart,
   Trash2,
   User,
@@ -280,7 +276,7 @@ export default function App() {
         </a>
         <Realtime token={token} />
         <Header />
-        <main id="main" className="page" tabIndex={-1}>
+        <main id="main" className={`page ${auth ? "auth-page" : ""} ${pathname === "/cart" ? "cart-page" : ""} ${pathname.startsWith("/nft/") ? "detail-page" : ""}`} tabIndex={-1}>
           {privateView && !session.data ? (
             <Skeleton detail />
           ) : pathname === "/" ? (
@@ -425,7 +421,7 @@ function BottomNav() {
   return (
     <nav className="bottom-nav" aria-label="Navegação mobile">
       <Link to="/" aria-label="Início">
-        <HomeIcon />
+        <DesignAsset name="home" />
       </Link>
       <Link to="/favorites" aria-label="Favoritos">
         <Heart />
@@ -439,7 +435,7 @@ function BottomNav() {
         <Plus />
       </Link>
       <Link to="/cart" aria-label="Carrinho">
-        <ShoppingBag />
+        <DesignAsset name="shop" />
       </Link>
       <Link to={session ? "/profile" : "/login"} aria-label="Minha conta">
         <User />
@@ -653,7 +649,7 @@ function Home() {
           change({ q });
         }}
       >
-        <Search size={20} />
+        <DesignAsset name="search" />
         <input
           aria-label="Explorar coleções"
           placeholder="Explorar coleções"
@@ -667,11 +663,12 @@ function Home() {
           aria-label="Abrir filtros"
           onClick={() => setFilters(true)}
         >
-          <Settings2 />
+          <DesignAsset name="filter" />
         </Button>
         <button className="sr-only">Buscar</button>
       </form>
       <section className="hero">
+        <DesignAsset name="heroBackdrop" className="hero-backdrop" />
         <div>
           <p className="eyebrow">Bem-vindo à Kurio</p>
           <h1 className="desktop-hero-title">
@@ -684,25 +681,24 @@ function Home() {
             <br />
             CULTURA DIGITAL
           </h1>
-          <p className="hero-description">
+          <p className="hero-description desktop-hero-description">
             Descubra NFTs selecionados de criadores emergentes e consagrados.
             Colecione arte digital rara, apoie artistas e tenha uma parte da
             cultura da internet.
           </p>
+          <p className="mobile-hero-description">Descubra NFTs selecionados de criadores do mundo todo.</p>
           <Button asChild>
-            <a href="#catalog">EXPLORAR</a>
+            <a href="#catalog">EXPLORAR <ArrowRight size={16} /></a>
           </Button>
-          <span className="hero-dots" aria-hidden="true">
-            •••
-          </span>
+          <span className="hero-dots" aria-hidden="true"><DesignAsset name="heroDots" /></span>
         </div>
-        <img
+        <div className="hero-art"><img
           src="/assets/emerald.webp"
           alt="Emerald Ape, arte digital em destaque na Kurio"
           width={450}
           height={450}
           fetchPriority="high"
-        />
+        /><img className="hero-thumbnail" src="/assets/sage.webp" alt="" width={58} height={58} /></div>
       </section>
       <section className="market-layout" id="catalog">
         <aside>
@@ -923,12 +919,12 @@ function Detail({ id }: { id: string }) {
   };
   return (
     <>
-      <Link to="/" className="mobile-detail-back"><ArrowLeft size={20}/>Voltar ao mercado</Link>
+      <div className="mobile-detail-controls"><Link to="/" className="mobile-detail-back" aria-label="Voltar ao mercado"><ArrowLeft size={18}/></Link><FavoriteButton nft={n} /></div>
       <Breadcrumb label={n.name} />
       <section className="detail-layout">
         <div className="gallery">
           <div className="thumbnails">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <button
                 key={i}
                 onClick={() => setZoom(true)}
@@ -949,7 +945,7 @@ function Detail({ id }: { id: string }) {
         </div>
         <div className="detail-info">
           <div className="detail-title">
-            <h1>{n.name}</h1>
+            <h1>{n.name}</h1><span className="mobile-rating">★ {n.rating}({n.reviews})</span>
             <FavoriteButton nft={n} />
           </div>
           <strong className="detail-price">{money(n.price)}</strong>
@@ -961,9 +957,7 @@ function Detail({ id }: { id: string }) {
           </p>
           <h2>Sobre este NFT:</h2>
           <p>
-            Um colecionável digital finalizado à mão da coleção Kurio Editions,
-            verificado na {n.network}, com arte desbloqueável e acesso para
-            colecionadores.
+            Um colecionável digital {edition} finalizado à mão da coleção Kurio Editions, verificado na {n.network}.
           </p>
           <fieldset className="edition-picker">
             <legend>Edição:</legend>
@@ -1261,7 +1255,7 @@ function CartPage() {
   return (
     <>
       <Breadcrumb label="Carrinho" />
-      <h1 className="mobile-page-title">Carrinho de NFTs</h1>
+      <div className="mobile-page-heading"><Link to="/" aria-label="Voltar ao mercado"><ArrowLeft size={18}/></Link><h1>Carrinho de NFTs</h1></div>
       {cart.isPending ? (
         <Skeleton detail />
       ) : cart.isError ? (
@@ -1490,6 +1484,7 @@ function Auth({ register }: { register: boolean }) {
         {register && (
           <Field
             name="username"
+            placeholder="Nome de usuário"
             label="Nome de usuário"
             value={values.username}
             onChange={(v) => setValues({ ...values, username: v })}
@@ -1511,6 +1506,7 @@ function Auth({ register }: { register: boolean }) {
         />
         <Field
           name="password"
+          placeholder="***********"
           label="Senha"
           type="password"
           value={values.password}
@@ -1522,6 +1518,7 @@ function Auth({ register }: { register: boolean }) {
         {register && (
           <Field
             name="confirmation"
+            placeholder="Confirmar senha"
             label="Confirmar senha"
             type="password"
             value={values.confirmation}
@@ -1600,6 +1597,7 @@ function Auth({ register }: { register: boolean }) {
 }
 
 function Checkout() {
+  const mobile = useMobile();
   const session = useSession(),
     navigate = useNavigate(),
     notify = useNotice(),
@@ -1762,8 +1760,11 @@ function Checkout() {
   return (
     <>
       <Breadcrumb label="Pagamento" />
+      <div className="mobile-page-heading"><Link to="/cart" aria-label="Voltar ao carrinho"><ArrowLeft size={18}/></Link><h1>Pagamento com carteira</h1></div>
       <form className="checkout-layout" onSubmit={submit}>
-        <section>
+        <section className="checkout-collector">
+          <details className="collector-details" open={!mobile} onInvalidCapture={e => { e.currentTarget.open = true; }}>
+            <summary>Dados do colecionador</summary>
           <h1>Perfil do colecionador</h1>
           <div className="form-grid">
             {[
@@ -1797,7 +1798,10 @@ function Checkout() {
               />
             </div>
           </div>
-          <h2>Pagamento com carteira</h2>
+          </details>
+        </section>
+        <section className="checkout-wallet-panel">
+          <div className="section-title"><h2>Carteira conectada</h2><Link to="/wallets">Trocar carteira</Link></div>
           <p>Conexão e pagamento simulados. Nenhuma extensão será aberta.</p>
           {wallets.data?.length ? (
             <div className="wallet-options">
@@ -1805,6 +1809,7 @@ function Checkout() {
                 <button
                   type="button"
                   key={w.id}
+                  aria-pressed={wallet?.id === w.id}
                   className={wallet?.id === w.id ? "selected" : ""}
                   onClick={() => {
                     setSelected(w.id);
@@ -1812,13 +1817,13 @@ function Checkout() {
                     setReview(null);
                   }}
                 >
-                  <WalletIcon />
+                  <span className="selection-ring" aria-hidden="true" />
                   <span>
-                    {w.displayName}
+                    <b>{w.displayName}</b>
                     <strong>{w.ens || shortAddress(w.address)}</strong>Rede{" "}
                     {w.network}
                   </span>
-                  {wallet?.id === w.id && <Check size={18} />}
+
                 </button>
               ))}
             </div>
@@ -1850,6 +1855,7 @@ function Checkout() {
               <button
                 type="button"
                 key={name}
+                aria-pressed={provider === name}
                 className={provider === name ? "selected" : ""}
                 onClick={() => {
                   setProvider(name);
@@ -1857,7 +1863,7 @@ function Checkout() {
                   setReview(null);
                 }}
               >
-                <span>{name[0]}</span>
+                <span className="provider-mark">{name === "Coinbase Wallet" ? <DesignAsset name="wallet" /> : name[0]}</span>
                 {name}
               </button>
             ))}
@@ -1905,6 +1911,8 @@ function Checkout() {
           ) : (
             <Summary quote={quote.data} />
           )}
+        </section>
+        <section className="checkout-confirmation">
           <div className="review-status" role="status">
             {review && review === quote.data?.fingerprint
               ? "Revisão concluída. Confira o total acima e confirme sua compra."

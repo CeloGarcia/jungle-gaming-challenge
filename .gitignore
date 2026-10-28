@@ -27,3 +27,5 @@ playwright-report/
 !/reports/e2e/
 /reports/e2e/*
 !/reports/e2e/html/
+
+/.playwright-cli/
