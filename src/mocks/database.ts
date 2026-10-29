@@ -37,6 +37,7 @@ export const scenarios = [
   "slow",
   "variable",
   "out-of-order",
+  "response-lag",
   "timeout",
   "offline",
   "http-400",
@@ -181,7 +182,7 @@ export async function reset(scenario = "success") {
     });
   }
   db = {
-    schema: 1,
+    schema: 2,
     accounts,
     sessions: {},
     nfts: fixtures(),
@@ -199,8 +200,19 @@ export async function init() {
     const existing = JSON.parse(
       localStorage.getItem(KEY) || "null",
     ) as Db | null;
-    if (existing?.schema === 1) {
+    if (existing?.schema === 1 || existing?.schema === 2) {
       db = existing;
+      if (existing.schema === 1) {
+        for (const cart of Object.values(db.carts))
+          for (const item of cart.items)
+            item.generation ||= crypto.randomUUID();
+        for (const order of db.orders)
+          for (const item of order.quote.items)
+            item.generation ||= crypto.randomUUID();
+        db.quotes = {};
+        db.schema = 2;
+        save();
+      }
       return;
     }
   } catch {
@@ -282,6 +294,7 @@ export function addItem(
       edition,
       quantity,
       added: quantity,
+      generation: crypto.randomUUID(),
       nft: n,
     });
   cart.revision++;
@@ -292,14 +305,22 @@ export function mergeCart(visitor: string, userId: string) {
   const guest = cartFor(`guest:${visitor}`);
   const target = cartFor(userId);
   for (const item of guest.items) {
-    const existing = target.items.find((i) => i.id === item.id);
+    const existing = target.items.find(
+      (i) => i.nftId === item.nftId && i.edition === item.edition,
+    );
     const max = nft(item.nftId).editions[item.edition];
     const quantity = Math.min(max, (existing?.quantity || 0) + item.quantity);
     if (quantity > 0) {
       if (existing) {
+        existing.added += quantity - existing.quantity;
         existing.quantity = quantity;
-        existing.added += item.quantity;
-      } else target.items.push({ ...item, quantity });
+      } else
+        target.items.push({
+          ...item,
+          quantity,
+          added: quantity,
+          generation: crypto.randomUUID(),
+        });
     }
   }
   guest.items = [];
@@ -308,13 +329,16 @@ export function mergeCart(visitor: string, userId: string) {
   target.revision++;
   save();
 }
+export function normalizeEmail(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
 export async function signIn(
   email: string,
   password: string,
   visitor: string,
 ): Promise<Session> {
   const user = db.accounts.find(
-    (a) => a.profile.email.toLowerCase() === email.toLowerCase(),
+    (a) => normalizeEmail(a.profile.email) === normalizeEmail(email),
   );
   if (!user || (await digest(user.salt + password)) !== user.passwordHash)
     throw new Fault(422, "CREDENTIALS", "E-mail ou senha inválidos.", {
@@ -416,22 +440,46 @@ export function updateNft(
 }
 export function settle(order: Order, declined = false) {
   if (order.status !== "pending" || !db.orders.includes(order)) return order;
+  // Validate every line before changing either stock or the cart. Settlement is synchronous.
+  const required = new Map<
+    string,
+    { nft: Nft; edition: Edition; quantity: number }
+  >();
+  for (const bought of order.quote.items) {
+    const key = bought.nftId + ":" + bought.edition;
+    const demand = required.get(key);
+    if (demand) demand.quantity += bought.quantity;
+    else
+      required.set(key, {
+        nft: nft(bought.nftId),
+        edition: bought.edition,
+        quantity: bought.quantity,
+      });
+  }
+  const unavailable =
+    !declined &&
+    [...required.values()].some(
+      (line) => line.nft.editions[line.edition] < line.quantity,
+    );
+  declined ||= unavailable;
+  if (unavailable)
+    order.declineReason =
+      "A disponibilidade mudou enquanto o pedido estava pendente. Nenhuma unidade foi consumida.";
   order.status = declined ? "declined" : "confirmed";
   order.version++;
   order.updatedAt = new Date().toISOString();
   if (!declined) {
     const cart = cartFor(order.ownerId);
     for (const bought of order.quote.items) {
-      const item = cart.items.find((i) => i.id === bought.id);
+      const item = cart.items.find(
+        (i) => i.id === bought.id && i.generation === bought.generation,
+      );
       if (item) {
         const later = Math.max(0, item.added - bought.added);
         item.quantity = Math.max(later, item.quantity - bought.quantity);
       }
       const n = nft(bought.nftId);
-      n.editions[bought.edition] = Math.max(
-        0,
-        n.editions[bought.edition] - bought.quantity,
-      );
+      n.editions[bought.edition] -= bought.quantity;
       n.version++;
     }
     cart.items = cart.items.filter((i) => i.quantity > 0);
@@ -622,7 +670,7 @@ export function validateProfile(body: Record<string, unknown>, id: string) {
     db.accounts.some(
       (a) =>
         a.profile.id !== id &&
-        (a.profile.email === body.email ||
+        (normalizeEmail(a.profile.email) === normalizeEmail(body.email) ||
           a.profile.username === body.username),
     )
   )

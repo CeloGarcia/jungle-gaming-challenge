@@ -22,6 +22,7 @@ import {
   subscribe,
   updateNft,
   validateProfile,
+  normalizeEmail,
   validateQuantity,
   validateWallet,
   owner,
@@ -95,8 +96,14 @@ export const handlers = [
         { status: 400 },
       );
     }
-    const response = (data: unknown, status = 200) =>
-      HttpResponse.json(data as never, { status });
+    const response = (data: unknown, status = 200) => {
+      const value = HttpResponse.json(data as never, { status });
+      return db.scenario === "response-lag" &&
+        path === "/profile" &&
+        method === "PATCH"
+        ? delay(1800).then(() => value)
+        : value;
+    };
     try {
       if (path === "/demo/reset" && method === "POST")
         return response(await reset(body.scenario || "success"));
@@ -122,7 +129,7 @@ export const handlers = [
             eventId: `nft:${n.id}:${n.version}`,
             resourceId: n.id,
             version: n.version,
-            resource: structuredClone(n),
+            resource: { ...structuredClone(n), ...body.patch },
           };
           emit("nft.updated", event);
           emit("nft.updated", {
@@ -169,6 +176,7 @@ export const handlers = [
           );
       }
       if (path === "/accounts" && method === "POST") {
+        body.email = normalizeEmail(body.email);
         if (db.scenario === "signup-conflict")
           throw new Fault(
             409,
@@ -187,8 +195,10 @@ export const handlers = [
             "A senha deve ter ao menos oito caracteres e coincidir com a confirmação.",
             { confirmation: "Confira as senhas." },
           );
-        const id = `user-${db.accounts.length + 1}`,
-          salt = crypto.randomUUID();
+        const salt = crypto.randomUUID();
+        const passwordHash = await digest(salt + body.password);
+        validateProfile({ ...body, displayName: body.username }, "");
+        const id = `user-${db.accounts.length + 1}`;
         db.accounts.push({
           profile: {
             id,
@@ -199,7 +209,7 @@ export const handlers = [
             walletNickname: "",
             avatar: "",
           },
-          passwordHash: await digest(salt + body.password),
+          passwordHash,
           salt,
           wallets: [],
           favorites: [],
@@ -347,6 +357,7 @@ export const handlers = [
             "Não foi possível salvar este formulário.",
             { displayName: "Nome indisponível no cenário de erro." },
           );
+        body.email = normalizeEmail(body.email);
         validateProfile(body, user.profile.id);
         if (body.avatar && String(body.avatar).length > 700000)
           throw new Fault(

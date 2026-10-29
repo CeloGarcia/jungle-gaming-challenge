@@ -52,6 +52,7 @@ export interface CartItem {
   edition: Edition;
   quantity: number;
   added: number;
+  generation: string;
   nft: Nft;
 }
 export interface Cart {
@@ -85,6 +86,7 @@ export interface Order {
   collector: Record<string, string>;
   idempotencyKey: string;
   requestHash: string;
+  declineReason?: string;
 }
 export interface CatalogParams {
   q?: string;
