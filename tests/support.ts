@@ -34,7 +34,7 @@ export async function login(
   await page.getByLabel(/^E-mail(?: \*)?$/).fill(email);
   await page.getByLabel(/^Senha(?: \*)?$/).fill(password);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(destination.replace("/", "\\/")));
+  await expect(page).toHaveURL((url) => url.pathname === destination);
   if (destination === "/checkout")
     await expect(page.locator(".checkout-layout")).toBeVisible();
   else

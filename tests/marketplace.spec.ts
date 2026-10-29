@@ -103,7 +103,7 @@ test("sessão, expiração, retorno ao fluxo e troca de usuário", async ({
   await page.getByLabel(/^E-mail(?: \*)?$/).fill("nova@kurio.demo");
   await page.getByLabel(/^Senha(?: \*)?$/).fill("Kurio123!");
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await expect(page).toHaveURL(/wallets/);
+  await expect(page).toHaveURL((url) => url.pathname === "/wallets");
   await page.goto("/profile");
   await expect(
     page.getByLabel("Nome de exibição", { exact: false }),
