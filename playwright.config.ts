@@ -4,6 +4,8 @@ export default defineConfig({
   testMatch: "**/*.spec.ts",
   outputDir: ".local/test-results",
   fullyParallel: false,
+  updateSnapshots: "none",
+  forbidOnly: !!process.env.CI,
   workers: 1,
   timeout: 30000,
   expect: { timeout: 8000 },
@@ -15,7 +17,9 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.TEST_BASE_URL || "http://127.0.0.1:5173",
-    channel: "chrome",
+    channel:
+      process.env.PLAYWRIGHT_CHANNEL ||
+      (process.platform === "linux" ? "chromium" : "chrome"),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

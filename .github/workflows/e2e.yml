@@ -1,0 +1,45 @@
+name: E2E Linux
+on:
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: Gerar baselines canônicas Linux para revisão
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: true
+      PLAYWRIGHT_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck && npm run lint && npm run test:unit && npm run build
+      - name: Gerar baselines para revisão
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_baselines }}
+        run: npm run test:preview -- --grep 'regressão visual' --update-snapshots=all --reporter=list
+      - run: npm run test:preview
+      - name: Baselines Linux
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.update_baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-baselines
+          path: tests/*-snapshots/*-linux.png
+      - name: Relatório Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-linux
+          path: |
+            reports/e2e/html/
+            .local/test-results/
+            .local/reports/e2e-results.json
