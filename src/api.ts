@@ -1,4 +1,8 @@
-import axios from "axios";
+import axios, {
+  AxiosHeaders,
+  CanceledError,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import { QueryClient } from "@tanstack/react-query";
 import type { ApiError, Session } from "./domain";
 export const queryClient = new QueryClient({
@@ -30,10 +34,36 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+function sentToken(config?: InternalAxiosRequestConfig) {
+  const header = AxiosHeaders.from(config?.headers).get("Authorization");
+  return typeof header === "string" && header.startsWith("Bearer ")
+    ? header.slice(7)
+    : null;
+}
+function staleRequest(config: InternalAxiosRequestConfig) {
+  const current = localStorage.getItem("kurio.token");
+  return sentToken(config) !== current;
+}
 api.interceptors.response.use(
-  (r) => r,
+  (response) => {
+    const reset =
+      response.config.url === "/demo/reset" &&
+      !localStorage.getItem("kurio.token");
+    if (!reset && staleRequest(response.config))
+      throw new CanceledError("A sessão desta requisição foi substituída.");
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401 && localStorage.getItem("kurio.token")) {
+    if (error.config && staleRequest(error.config))
+      return Promise.reject(
+        new CanceledError("A sessão desta requisição foi substituída."),
+      );
+    const sent = sentToken(error.config);
+    if (
+      error.response?.status === 401 &&
+      sent &&
+      sent === localStorage.getItem("kurio.token")
+    ) {
       localStorage.removeItem("kurio.token");
       window.dispatchEvent(new Event("kurio:expired"));
     }

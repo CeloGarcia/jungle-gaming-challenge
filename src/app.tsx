@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { isCancel } from "axios";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -81,7 +89,7 @@ function useResource<T>(path: string, key: unknown[], enabled = true) {
 }
 function useAction() {
   const notify = useNotice();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({
       method = "post",
       path,
@@ -93,8 +101,15 @@ function useAction() {
       body?: unknown;
       headers?: Record<string, string>;
     }) => (await api.request({ url: path, method, data: body, headers })).data,
-    onError: (error) => notify(errorMessage(error)),
+    onError: (error) => {
+      if (!isCancel(error)) notify(errorMessage(error));
+    },
   });
+  return {
+    ...mutation,
+    error: isCancel(mutation.error) ? null : mutation.error,
+    isError: mutation.isError && !isCancel(mutation.error),
+  };
 }
 function useCart() {
   const owner = useOwner();
@@ -470,10 +485,14 @@ function FavoriteButton({ nft }: { nft: Nft }) {
       return { previous };
     },
     onError: (error, _, ctx) => {
+      if (isCancel(error)) return;
       queryClient.setQueryData(key, ctx?.previous);
       notify(errorMessage(error));
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
+    onSettled: (_data, error) => {
+      if (!isCancel(error))
+        void queryClient.invalidateQueries({ queryKey: key });
+    },
   });
   return (
     <button
@@ -535,8 +554,13 @@ function Filters({
   onChange: (p: Partial<CatalogParams>) => void;
   facets?: Catalog["facets"];
 }) {
+  const sortId = useId();
   const [min, setMin] = useState(params.min || "0.02"),
     [max, setMax] = useState(params.max || "12.30");
+  useEffect(() => {
+    setMin(params.min || "0.02");
+    setMax(params.max || "12.30");
+  }, [params.min, params.max]);
   const toggle = (key: "categories" | "networks", value: string) => {
     const items = (params[key] || "").split(",").filter(Boolean);
     onChange({
@@ -612,7 +636,9 @@ function Filters({
         className="clear-filters"
         variant="ghost"
         size="sm"
-        onClick={() =>
+        onClick={() => {
+          setMin("0.02");
+          setMax("12.30");
           onChange({
             categories: "",
             networks: "",
@@ -620,11 +646,23 @@ function Filters({
             max: "",
             q: "",
             tab: "all",
-          })
-        }
+          });
+        }}
       >
         Limpar filtros
       </Button>
+      <div className="filter-sort">
+        <label htmlFor={sortId}>Ordenar NFTs</label>
+        <select
+          id={sortId}
+          value={params.sort || "recent"}
+          onChange={(e) => onChange({ sort: e.target.value })}
+        >
+          <option value="recent">Listados recentemente</option>
+          <option value="price-asc">Menor preço</option>
+          <option value="price-desc">Maior preço</option>
+        </select>
+      </div>
     </div>
   );
 }
@@ -1832,6 +1870,9 @@ function Checkout() {
   }, [wallet]);
   const network = wallet?.network || "Ethereum";
   const quote = useQuote(coupon, network);
+  useEffect(() => {
+    if (quote.isError) setReview(null);
+  }, [quote.isError]);
   const restoredCoupon = useRef(false);
   useEffect(() => {
     if (cart.data && !restoredCoupon.current) {
@@ -1875,7 +1916,9 @@ function Checkout() {
         {localStorage.getItem(`kurio.attempt:${owner}`) && (
           <Button
             onClick={() =>
-              void recover().catch((error) => notify(errorMessage(error)))
+              void recover().catch((error) => {
+                if (!isCancel(error)) notify(errorMessage(error));
+              })
             }
           >
             Recuperar pedido
@@ -1925,6 +1968,7 @@ function Checkout() {
       );
       void navigate({ to: "/orders/$id", params: { id: order.id } });
     } catch (error) {
+      if (isCancel(error)) return;
       if (localStorage.getItem(`kurio.attempt:${owner}`)) {
         try {
           if (await recover()) return;
@@ -2146,7 +2190,14 @@ function Checkout() {
           </div>
           <Button
             type="submit"
-            disabled={action.isPending || !connected || !quote.data || !wallet}
+            disabled={
+              action.isPending ||
+              !connected ||
+              !quote.data ||
+              !wallet ||
+              quote.isError ||
+              quote.isFetching
+            }
           >
             {action.isPending
               ? "Enviando…"
@@ -2300,7 +2351,8 @@ function OrderPage({ id }: { id: string }) {
         <div className="state-box" role="alert">
           <h1>Pagamento recusado</h1>
           <p>
-            A simulação recusou o pagamento. Seus itens permanecem no carrinho.
+            {order.declineReason ||
+              "A simulação recusou o pagamento. Seus itens permanecem no carrinho."}
           </p>
           <Button
             onClick={() => {
